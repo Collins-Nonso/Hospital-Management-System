@@ -3,29 +3,26 @@ const User = require("../models/User");
 
 const protect = async (req, res, next) => {
   try {
-    let token;
+    const authHeader = req.headers.authorization;
 
-    if (
-      req.headers.authorization &&
-      req.headers.authorization.startsWith("Bearer")
-    ) {
-      token = req.headers.authorization.split(" ")[1];
-
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      req.user = await User.findById(decoded.id).select("-password");
-
-      next();
-    } else {
+    if (!authHeader || !authHeader.startsWith("Bearer")) {
       return res.status(401).json({
         success: false,
-        message: "Not authorized"
+        message: "Unauthorized"
       });
     }
+
+    const token = authHeader.split(" ")[1];
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = await User.findById(decoded.id).select("-password");
+
+    next();
   } catch (error) {
     return res.status(401).json({
       success: false,
-      message: "Token failed"
+      message: "Invalid token"
     });
   }
 };

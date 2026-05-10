@@ -1,8 +1,10 @@
 const User = require("../models/User");
 const generateToken = require("../utils/generateToken");
 
-const registerUser = async (data) => {
-  const existingUser = await User.findOne({ email: data.email });
+const register = async (data) => {
+  const existingUser = await User.findOne({
+    email: data.email
+  });
 
   if (existingUser) {
     throw new Error("User already exists");
@@ -11,37 +13,31 @@ const registerUser = async (data) => {
   const user = await User.create(data);
 
   return {
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    token: generateToken(user._id, user.role)
+    user,
+    token: generateToken(user)
   };
 };
 
-const loginUser = async (email, password) => {
+const login = async (email, password) => {
   const user = await User.findOne({ email });
 
   if (!user) {
     throw new Error("Invalid credentials");
   }
 
-  const isMatch = await user.matchPassword(password);
+  const validPassword = await user.comparePassword(password);
 
-  if (!isMatch) {
+  if (!validPassword) {
     throw new Error("Invalid credentials");
   }
 
   return {
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    role: user.role,
-    token: generateToken(user._id, user.role)
+    user,
+    token: generateToken(user)
   };
 };
 
 module.exports = {
-  registerUser,
-  loginUser
+  register,
+  login
 };

@@ -6,15 +6,32 @@ const prescriptionSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient"
     },
+
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Doctor"
     },
-    medicationName: String,
-    dosage: String,
-    frequency: String,
-    duration: String,
-    instructions: String
+
+    consultation: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Consultation"
+    },
+
+    medications: [
+      {
+        medicationName: String,
+        dosage: String,
+        frequency: String,
+        duration: String,
+        instructions: String
+      }
+    ],
+
+    status: {
+      type: String,
+      enum: ["pending", "dispensed"],
+      default: "pending"
+    }
   },
   {
     timestamps: true

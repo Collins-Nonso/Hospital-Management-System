@@ -1,27 +1,77 @@
 const mongoose = require("mongoose");
 
+const billItemSchema = new mongoose.Schema({
+  itemName: {
+    type: String,
+    required: true
+  },
+  quantity: {
+    type: Number,
+    required: true,
+    min: 1
+  },
+  unitPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  },
+  totalPrice: {
+    type: Number,
+    required: true,
+    min: 0
+  }
+});
+
 const billingSchema = new mongoose.Schema(
   {
+    invoiceNumber: {
+      type: String,
+      required: true,
+      unique: true
+    },
+
     patient: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Patient"
+      ref: "Patient",
+      required: true
     },
+
     appointment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Appointment"
     },
-    amount: {
+
+    consultant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Doctor"
+    },
+
+    billItems: [billItemSchema],
+
+    totalAmount: {
       type: Number,
-      required: true
+      required: true,
+      default: 0
     },
-    paymentMethod: {
-      type: String,
-      enum: ["cash", "card", "transfer"]
-    },
+
     paymentStatus: {
       type: String,
       enum: ["pending", "paid"],
       default: "pending"
+    },
+
+    paymentMethod: {
+      type: String,
+      enum: ["cash", "card", "transfer", "insurance"],
+      default: "cash"
+    },
+
+    paidAt: {
+      type: Date
+    },
+
+    notes: {
+      type: String
     }
   },
   {

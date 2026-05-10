@@ -2,19 +2,34 @@ const mongoose = require("mongoose");
 
 const patientSchema = new mongoose.Schema(
   {
-    fullName: {
+    firstName: {
       type: String,
       required: true
     },
+
+    lastName: {
+      type: String,
+      required: true
+    },
+
     gender: String,
-    age: Number,
+
+    dateOfBirth: Date,
+
     phone: String,
+
     address: String,
+
+    bloodGroup: String,
+
     allergies: [String],
+
     emergencyContact: {
       name: String,
-      phone: String
+      phone: String,
+      relationship: String
     },
+
     medicalHistory: [String]
   },
   {

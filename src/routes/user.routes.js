@@ -16,21 +16,7 @@ router.get(
   "/:id",
   protect,
   authorizeRoles("admin"),
-  userController.getUserById
-);
-
-router.put(
-  "/:id",
-  protect,
-  authorizeRoles("admin"),
-  userController.updateUser
-);
-
-router.delete(
-  "/:id",
-  protect,
-  authorizeRoles("admin"),
-  userController.deleteUser
+  userController.getSingleUser
 );
 
 module.exports = router;

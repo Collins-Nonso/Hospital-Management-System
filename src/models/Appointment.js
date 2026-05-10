@@ -7,20 +7,30 @@ const appointmentSchema = new mongoose.Schema(
       ref: "Patient",
       required: true
     },
+
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Doctor",
       required: true
     },
+
     appointmentDate: {
       type: Date,
       required: true
     },
+
     status: {
       type: String,
-      enum: ["scheduled", "cancelled", "completed"],
-      default: "scheduled"
-    }
+      enum: [
+        "pending",
+        "confirmed",
+        "cancelled",
+        "completed"
+      ],
+      default: "pending"
+    },
+
+    reason: String
   },
   {
     timestamps: true

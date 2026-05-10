@@ -8,7 +8,25 @@ const getPatients = async () => {
   return await Patient.find();
 };
 
+const getSinglePatient = async (id) => {
+  return await Patient.findById(id);
+};
+
+const updatePatient = async (id, data) => {
+  return await Patient.findByIdAndUpdate(id, data, {
+    new: true,
+    runValidators: true
+  });
+};
+
+const deletePatient = async (id) => {
+  return await Patient.findByIdAndDelete(id);
+};
+
 module.exports = {
   createPatient,
-  getPatients
+  getPatients,
+  getSinglePatient,
+  updatePatient,
+  deletePatient
 };

@@ -1,25 +1,32 @@
-const asyncHandler = require("../utils/asyncHandler");
 const authService = require("../services/auth.service");
 
-exports.register = asyncHandler(async (req, res) => {
-  const user = await authService.registerUser(req.body);
+exports.register = async (req, res, next) => {
+  try {
+    const data = await authService.register(req.body);
 
-  res.status(201).json({
-    success: true,
-    message: "User registered successfully",
-    data: user
-  });
-});
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      data
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
-exports.login = asyncHandler(async (req, res) => {
-  const user = await authService.loginUser(
-    req.body.email,
-    req.body.password
-  );
+exports.login = async (req, res, next) => {
+  try {
+    const data = await authService.login(
+      req.body.email,
+      req.body.password
+    );
 
-  res.status(200).json({
-    success: true,
-    message: "Login successful",
-    data: user
-  });
-});
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      data
+    });
+  } catch (error) {
+    next(error);
+  }
+};

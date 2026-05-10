@@ -7,7 +7,14 @@ const departmentSchema = new mongoose.Schema(
       required: true,
       unique: true
     },
-    description: String
+
+    description: String,
+
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active"
+    }
   },
   {
     timestamps: true
