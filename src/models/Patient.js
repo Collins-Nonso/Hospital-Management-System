@@ -4,12 +4,12 @@ const patientSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: true
+      required: true,
     },
 
     lastName: {
       type: String,
-      required: true
+      required: true,
     },
 
     gender: String,
@@ -27,14 +27,14 @@ const patientSchema = new mongoose.Schema(
     emergencyContact: {
       name: String,
       phone: String,
-      relationship: String
+      relationship: String,
     },
 
-    medicalHistory: [String]
+    medicalHistory: [String],
   },
   {
-    timestamps: true
-  }
+    timestamps: true,
+  },
 );
 
 module.exports = mongoose.model("Patient", patientSchema);

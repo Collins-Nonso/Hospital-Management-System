@@ -37,7 +37,30 @@ const login = async (email, password) => {
   };
 };
 
+const getAllUsers = async () => {
+  return await User.find().select("-password");
+};
+
+const getUserProfile = async (id) => {
+  return await User.findById(id).select("-password");
+};
+
+const updateUserProfile = async (id, data) => {
+  return await User.findByIdAndUpdate(id, data, {
+    new: true,
+    runValidators: true
+  }).select("-password");
+};
+
+const deleteUser = async (id) => {
+  return await User.findByIdAndDelete(id);
+};
+
 module.exports = {
   register,
-  login
+  login,
+  getAllUsers,
+  getUserProfile,
+  updateUserProfile,
+  deleteUser
 };

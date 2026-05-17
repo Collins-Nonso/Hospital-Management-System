@@ -5,23 +5,23 @@ const userSchema = new mongoose.Schema(
   {
     firstName: {
       type: String,
-      required: true
+      required: true,
     },
 
     lastName: {
       type: String,
-      required: true
+      required: true,
     },
 
     email: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
 
     password: {
       type: String,
-      required: true
+      required: true,
     },
 
     phone: String,
@@ -34,20 +34,20 @@ const userSchema = new mongoose.Schema(
         "nurse",
         "receptionist",
         "lab_scientist",
-        "pharmacist"
+        "pharmacist",
       ],
-      default: "receptionist"
+      default: "receptionist",
     },
 
     status: {
       type: String,
       enum: ["active", "inactive"],
-      default: "active"
-    }
+      default: "active",
+    },
   },
   {
-    timestamps: true
-  }
+    timestamps: true,
+  },
 );
 
 userSchema.pre("save", async function (next) {

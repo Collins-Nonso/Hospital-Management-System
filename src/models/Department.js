@@ -1,3 +1,5 @@
+// src/models/Department.js
+
 const mongoose = require("mongoose");
 
 const departmentSchema = new mongoose.Schema(
@@ -5,20 +7,24 @@ const departmentSchema = new mongoose.Schema(
     name: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
+      trim: true,
     },
 
-    description: String,
+    description: {
+      type: String,
+      trim: true,
+    },
 
     status: {
       type: String,
       enum: ["active", "inactive"],
-      default: "active"
-    }
+      default: "active",
+    },
   },
   {
-    timestamps: true
-  }
+    timestamps: true,
+  },
 );
 
 module.exports = mongoose.model("Department", departmentSchema);

@@ -1,4 +1,5 @@
 const Doctor = require("../models/Doctor");
+const doctorService = require("../services/doctor.service");
 
 exports.createDoctor = async (req, res) => {
   const doctor = await Doctor.create(req.body);

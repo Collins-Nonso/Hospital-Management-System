@@ -7,13 +7,18 @@ const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./src/config/swagger");
 const errorMiddleware = require("./src/middlewares/error.middleware");
 
-const authRoutes = require("./src/routes/auth.routes");
-const patientRoutes = require("./src/routes/patient.routes");
-const doctorRoutes = require("./src/routes/doctor.routes");
 const appointmentRoutes = require("./src/routes/appointment.routes");
-const medicalRecordRoutes = require("./src/routes/medicalRecord.routes");
-const prescriptionRoutes = require("./src/routes/prescription.routes");
+const authRoutes = require("./src/routes/auth.routes");
 const billingRoutes = require("./src/routes/billing.routes");
+const consultationRoutes = require("./src/routes/consultation.routes");
+const departmentRoutes = require("./src/routes/department.routes");
+const doctorRoutes = require("./src/routes/doctor.routes");
+const labRoutes = require("./src/routes/lab.routes");
+const medicalRecordRoutes = require("./src/routes/medicalRecord.routes");
+const patientRoutes = require("./src/routes/patient.routes");
+const pharmacyRoutes = require("./src/routes/pharmacy.routes");
+const prescriptionRoutes = require("./src/routes/prescription.routes");
+const userRoutes = require("./src/routes/user.routes");
 
 dotenv.config();
 connectDB();
@@ -26,14 +31,18 @@ app.use(morgan("dev"));
 
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.use("/api/auth", authRoutes);
-app.use("/api/patients", patientRoutes);
-app.use("/api/doctors", doctorRoutes);
 app.use("/api/appointments", appointmentRoutes);
-app.use("/api/medical-records", medicalRecordRoutes);
-app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/auth", authRoutes);
 app.use("/api/billings", billingRoutes);
-
+app.use("/api/consultations", consultationRoutes);
+app.use("/api/departments", departmentRoutes);
+app.use("/api/doctors", doctorRoutes);
+app.use("/api/labs", labRoutes);
+app.use("/api/medical-records", medicalRecordRoutes);
+app.use("/api/patients", patientRoutes);
+app.use("/api/pharmacies", pharmacyRoutes);
+app.use("/api/prescriptions", prescriptionRoutes);
+app.use("/api/users", userRoutes);
 app.use(errorMiddleware);
 
 const PORT = process.env.PORT || 5000;

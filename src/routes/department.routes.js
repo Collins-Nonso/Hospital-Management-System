@@ -1,41 +1,19 @@
+// src/routes/department.routes.js
+
 const express = require("express");
 const router = express.Router();
-
 const departmentController = require("../controllers/department.controller");
-const protect = require("../middlewares/auth.middleware");
-const authorizeRoles = require("../middlewares/role.middleware");
 
-router.post(
-  "/",
-  protect,
-  authorizeRoles("admin"),
-  departmentController.createDepartment
-);
+const validate = require("../middlewares/validate.middleware");
 
-router.get(
-  "/",
-  protect,
-  departmentController.getDepartments
-);
+const {
+  createDepartmentValidation,
+} = require("../validations/department.validation");
 
-router.get(
-  "/:id",
-  protect,
-  departmentController.getDepartmentById
-);
-
-router.put(
-  "/:id",
-  protect,
-  authorizeRoles("admin"),
-  departmentController.updateDepartment
-);
-
-router.delete(
-  "/:id",
-  protect,
-  authorizeRoles("admin"),
-  departmentController.deleteDepartment
-);
+router.post("/", validate(createDepartmentValidation), departmentController.createDepartment);
+router.get("/", departmentController.getDepartments);
+router.get("/:id", departmentController.getSingleDepartment);
+router.put("/:id", departmentController.updateDepartment);
+router.delete("/:id", departmentController.deleteDepartment);
 
 module.exports = router;

@@ -5,36 +5,31 @@ const appointmentSchema = new mongoose.Schema(
     patient: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
-      required: true
+      required: true,
     },
 
     doctor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Doctor",
-      required: true
+      required: true,
     },
 
     appointmentDate: {
       type: Date,
-      required: true
+      required: true,
     },
 
     status: {
       type: String,
-      enum: [
-        "pending",
-        "confirmed",
-        "cancelled",
-        "completed"
-      ],
-      default: "pending"
+      enum: ["pending", "confirmed", "cancelled", "completed"],
+      default: "pending",
     },
 
-    reason: String
+    reason: String,
   },
   {
-    timestamps: true
-  }
+    timestamps: true,
+  },
 );
 
 module.exports = mongoose.model("Appointment", appointmentSchema);

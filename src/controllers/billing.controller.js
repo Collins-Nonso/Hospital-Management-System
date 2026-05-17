@@ -1,4 +1,5 @@
 const billingService = require("../services/billing.service");
+const Bill = require("../models/Billing");
 
 exports.createBill = async (req, res, next) => {
   try {

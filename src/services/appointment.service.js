@@ -1,6 +1,6 @@
 const Appointment = require("../models/Appointment");
 
-const createAppointment = async (data) => {
+const bookAppointment = async (data) => {
   const appointmentDate = new Date(data.appointmentDate);
 
   if (appointmentDate < new Date()) {
@@ -22,6 +22,22 @@ const createAppointment = async (data) => {
   return await Appointment.create(data);
 };
 
+const getAppointments = async () => {
+  return await Appointment.find()
+    .populate("patient")
+    .populate("doctor");
+}
+
+const cancelAppointment = async (id) => {
+  return await Appointment.findByIdAndUpdate(
+    id,
+    { status: "cancelled" },
+    { new: true }
+  );
+};
+
 module.exports = {
-  createAppointment
+  bookAppointment,
+  getAppointments,
+  cancelAppointment
 };

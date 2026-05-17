@@ -5,10 +5,6 @@ const protect = require("../middlewares/auth.middleware");
 
 router.post("/", protect, appointmentController.bookAppointment);
 router.get("/", protect, appointmentController.getAppointments);
-router.patch(
-  "/:id/cancel",
-  protect,
-  appointmentController.cancelAppointment
-);
+router.patch("/:id/cancel", protect, appointmentController.cancelAppointment);
 
 module.exports = router;

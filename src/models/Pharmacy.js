@@ -1,3 +1,5 @@
+// src/models/Pharmacy.js
+
 const mongoose = require("mongoose");
 
 const pharmacySchema = new mongoose.Schema(
