@@ -1,7 +1,7 @@
 // src/controllers/pharmacy.controller.js
 
 const pharmacyService = require("../services/pharmacy.service");
-const PharmacyRecord = require("../models/Pharmacy");
+const Pharmacy = require("../models/Pharmacy");
 
 exports.dispensePrescription = async (req, res, next) => {
   try {

@@ -16,7 +16,8 @@ const createBill = async (data) => {
   const totalAmount = calculateTotalAmount(processedItems);
 
   const bill = await Billing.create({
-    invoiceNumber: generateId("INV"),
+    // invoiceNumber: generateId("INV"),
+    invoiceNumber: data.invoiceNumber || generateId("INV"),
     patient: data.patient,
     appointment: data.appointment,
     consultant: data.consultant,

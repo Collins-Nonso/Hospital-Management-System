@@ -4,8 +4,6 @@ const express = require("express");
 
 const router = express.Router();
 
-console.log("Pharmacy routes loaded");
-
 const pharmacyController = require("../controllers/pharmacy.controller");
 
 const protect = require("../middlewares/auth.middleware");

@@ -3,9 +3,7 @@
 const Pharmacy = require("../models/Pharmacy");
 const Prescription = require("../models/Prescription");
 
-const dispensePrescription = async (
-  data
-) => {
+const dispensePrescription = async (data) => {
   const prescription =
     await Prescription.findById(
       data.prescription
