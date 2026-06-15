@@ -11,9 +11,10 @@ export interface Patient { id: ID; firstName: string; lastName: string; gender: 
 export interface Appointment { id: ID; patientId: ID; doctorId: ID; date: string; time: string; status: "booked" | "confirmed" | "completed" | "cancelled"; reason?: string; createdAt: string; }
 export interface Consultation { id: ID; appointmentId: ID; patientId: ID; doctorId: ID; symptoms: string[]; diagnosis: string; treatmentPlan: string; status: "ongoing" | "completed";   createdAt: string; }
 export interface MedicalRecord { id: ID; patientId: ID; doctorId: ID; consultationId: ID; diagnosis: string; treatmentNote: string; medicalHistory: string[]; createdAt: string; }
-export interface LabRequest { id: ID; patientId: ID; doctorId: ID; consultationId: ID; testName: string; instructions: string; status: "pending" | "completed"; createdAt: string; }
+export interface LabRequest { id: ID; patientId: ID; doctorId: ID; consultationId?: ID; testName: string; instructions?: string; status: "pending" | "completed"; createdAt: string; }
 export interface LabResult { id: ID; labRequestId: ID; patientId: ID; result: string; remarks: string; uploadedBy: string; createdAt: string; }
-export interface Prescription { id: ID; patientId: ID; doctorId: ID; consultationId: ID; medications: [{ medicationName: string; dosage: string; frequency: string; duration: string, instructions: string }]; status: "pending" | "dispensed"; createdAt: string; }
+export interface Medication { medicationName: string; dosage: string; frequency: string; duration: string; instructions?: string; }
+export interface Prescription { id: ID; patientId: ID; doctorId: ID; consultationId?: ID; medications: Medication[]; status: "pending" | "dispensed"; createdAt: string; }
 export interface Pharmacy { id: ID; prescriptionId: ID; patientId: ID; pharmacistId: ID; drugsDispensed: string[]; dispensedAt: string; createdAt: string; }
 export interface BillItem { itemName: string; quantity: number; unitPrice: number; totalPrice: number; }
 export interface Bill { id: ID; invoiceNumber: string; patientId: ID; appointmentId?: ID; consultationId?: ID; billItems: BillItem[]; totalAmount: number; paymentStatus: "pending" | "paid"; paymentMethod: "cash" | "card" | "transfer" | "insurance"; paidAt?: string; notes: string; createdAt: string; }
@@ -177,7 +178,7 @@ export const db = {
   async removePatient(id: ID) { await remove("patients", id); },
 
   // Appointments
-  async bookAppointment(input: Omit<Appointment, "id" | "status"> & { status?: Appointment["status"] }) {
+  async bookAppointment(input: Omit<Appointment, "id" | "status" | "createdAt"> & { status?: Appointment["status"] }) {
     // Client-side guards mirror common server validation; server is still source of truth.
     const slot = new Date(`${input.date}T${input.time}`);
     if (slot.getTime() < Date.now() - 60_000) throw new Error("Cannot book an appointment in the past");

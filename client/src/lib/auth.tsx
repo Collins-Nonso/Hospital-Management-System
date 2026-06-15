@@ -60,12 +60,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!cancelled && sessionVersion.current === runVersion && getToken()) {
           setUser(restoredUser?.id ? restoredUser : null);
         }
-      } catch {
-        setToken(null);
-        if (sessionVersion.current === runVersion) {
+      } catch (err) {
+        // Only sign out on true auth failures (401/403). Network errors, CORS
+        // hiccups, or server hiccups must NOT silently log the user out on
+        // page refresh — keep the token and let the next request retry.
+        const msg = err instanceof Error ? err.message : String(err);
+        const isAuthFailure = /\b(401|403)\b/.test(msg) || /unauthori[sz]ed/i.test(msg) || /forbidden/i.test(msg);
+        if (isAuthFailure) {
           setToken(null);
-          if (!cancelled) setUser(null);
+          if (sessionVersion.current === runVersion && !cancelled) setUser(null);
+        } else {
+          console.warn("[auth] /auth/me failed, keeping session:", msg);
         }
+        
       } finally {
         if (!cancelled && sessionVersion.current === runVersion) setLoading(false);
       }

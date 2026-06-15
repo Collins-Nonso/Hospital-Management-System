@@ -17,7 +17,7 @@ export const Route = createFileRoute("/dashboard/pharmacy")({
 
 function PharmacyPage() {
   const prescriptions = useDB((d) => d.prescriptions);
-  const dispenses = useDB((d) => d.dispenses);
+  const dispenses = useDB((d) => d.pharmacies);
   const patients = useDB((d) => d.patients);
   const { user } = useAuth();
   const [busy, setBusy] = useState<string | null>(null);
@@ -45,7 +45,7 @@ function PharmacyPage() {
             {prescriptions.map((rx) => {
               const p = patients.find((x) => x.id === rx.patientId);
               const dispensed = dispenses.find((dp) => dp.prescriptionId === rx.id);
-              const drugList = rx.medications.map((m) => m.name);
+              const drugList = rx.medications.map((m) => m.medicationName);
               return (
                 <TableRow key={rx.id}>
                   <TableCell className="font-medium">{p ? `${p.firstName} ${p.lastName}` : "—"}</TableCell>

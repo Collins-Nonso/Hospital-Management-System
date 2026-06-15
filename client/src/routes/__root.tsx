@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 
 import appCss from "../styles.css?url";
-import { ThemeProvider } from "@/lib/theme";
+import { ThemeProvider, themeBootScript } from "@/lib/theme";
 import { AuthProvider } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -92,6 +92,8 @@ function RootShell({ children }: { children: React.ReactNode }) {
     <html lang="en">
       <head>
         <HeadContent />
+        {/* Sync theme class before hydration to prevent the dark-mode flash. */}
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript }} />
       </head>
       <body>
         {children}

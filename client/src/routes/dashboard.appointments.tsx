@@ -37,10 +37,12 @@ function AppointmentsPage() {
 
   const filtered = tab === "all" ? appointments : appointments.filter((a) => a.status === tab);
 
-  const submit = () => {
+  const submit = async () => {
     if (!form.patientId || !form.doctorId || !form.date || !form.time) { toast.error("Please complete all required fields"); return; }
     try {
-      db.bookAppointment({ ...form, createdAt: new Date().toISOString() });
+      // Server generates createdAt + id; only send the user-supplied fields.
+      const { patientId, doctorId, date, time, reason } = form;
+      await db.bookAppointment({ patientId, doctorId, date, time, reason, status: "booked" });
       toast.success("Appointment booked");
       setOpen(false);
       setForm({ patientId: "", doctorId: "", date: "", time: "", status: "booked", reason: "" });

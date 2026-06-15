@@ -26,22 +26,31 @@ function LabPage() {
   const doctors = useDB((d) => d.doctors);
 
   const [openReq, setOpenReq] = useState(false);
-  const [reqForm, setReqForm] = useState({ patientId: "", doctorId: "", testType: "" });
+  const [reqForm, setReqForm] = useState({ patientId: "", doctorId: "", testName: "", instructions: "" });
 
   const [openRes, setOpenRes] = useState<{ id: string } | null>(null);
   const [resultText, setResultText] = useState("");
 
-  const submitReq = () => {
-    if (!reqForm.patientId || !reqForm.doctorId || !reqForm.testType.trim()) { toast.error("All fields required"); return; }
-    db.addLabRequest(reqForm); toast.success("Lab request created");
-    setOpenReq(false); setReqForm({ patientId: "", doctorId: "", testType: "" });
+  const submitReq = async () => {
+    if (!reqForm.patientId || !reqForm.doctorId || !reqForm.testName.trim()) {
+      toast.error("Patient, doctor and test name are required"); return;
+    }
+    try {
+      await db.addLabRequest(reqForm);
+      toast.success("Lab request created");
+      setOpenReq(false);
+      setReqForm({ patientId: "", doctorId: "", testName: "", instructions: "" });
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   };
 
-  const submitRes = () => {
+  const submitRes = async () => {
     if (!openRes) return;
-    if (!resultText.trim()) { toast.error("Result text required"); return; }
-    try { db.addLabResult({ labRequestId: openRes.id, result: resultText }); toast.success("Result uploaded"); setOpenRes(null); setResultText(""); }
-    catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+    try {
+      await db.addLabResult({ labRequestId: openRes.id, result: resultText });
+      toast.success("Result uploaded");
+      setOpenRes(null);
+      setResultText("");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   };
 
   return (
@@ -64,10 +73,21 @@ function LabPage() {
                 <div className="space-y-1.5"><Label>Doctor</Label>
                   <Select value={reqForm.doctorId} onValueChange={(v) => setReqForm({ ...reqForm, doctorId: v })}>
                     <SelectTrigger><SelectValue placeholder="Select doctor" /></SelectTrigger>
-                    <SelectContent>{doctors.map((d) => <SelectItem key={d.id} value={d.id}>{d.name}</SelectItem>)}</SelectContent>
+                    <SelectContent>
+                      {doctors.map((doc) => (
+                        <SelectItem key={doc.id} value={doc.id}>
+                          {doc.firstName} {doc.lastName}{doc.specialization ? ` — ${doc.specialization}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5"><Label>Test type</Label><Input value={reqForm.testType} onChange={(e) => setReqForm({ ...reqForm, testType: e.target.value })} placeholder="Blood test" /></div>
+                <div className="space-y-1.5"><Label>Test name</Label>
+                  <Input value={reqForm.testName} onChange={(e) => setReqForm({ ...reqForm, testName: e.target.value })} placeholder="Blood test" />
+                </div>
+                <div className="space-y-1.5"><Label>Instructions</Label>
+                  <Textarea rows={3} value={reqForm.instructions} onChange={(e) => setReqForm({ ...reqForm, instructions: e.target.value })} placeholder="Fasting required, etc." />
+                </div>
               </div>
               <DialogFooter><Button variant="outline" onClick={() => setOpenReq(false)}>Cancel</Button><Button onClick={submitReq}>Create</Button></DialogFooter>
             </DialogContent>
@@ -84,15 +104,15 @@ function LabPage() {
           <TableBody>
             {requests.map((r) => {
               const p = patients.find((x) => x.id === r.patientId);
-              const d = doctors.find((x) => x.id === r.doctorId);
+              const doc = doctors.find((x) => x.id === r.doctorId);
               const result = results.find((x) => x.labRequestId === r.id);
               return (
                 <TableRow key={r.id}>
                   <TableCell className="font-medium">{p ? `${p.firstName} ${p.lastName}` : "—"}</TableCell>
-                  <TableCell>{d?.name ?? "—"}</TableCell>
-                  <TableCell>{r.testType}</TableCell>
+                  <TableCell>{doc ? `${doc.firstName} ${doc.lastName}` : "—"}</TableCell>
+                  <TableCell>{r.testName}</TableCell>
                   <TableCell><Badge variant={r.status === "completed" ? "default" : "secondary"} className="capitalize">{r.status}</Badge></TableCell>
-                  <TableCell className="max-w-[260px] truncate text-muted-foreground">{result?.result ?? "—"}</TableCell>
+                  <TableCell className="max-w-65 truncate text-muted-foreground">{result?.result ?? "—"}</TableCell>
                   <TableCell className="text-right">
                     {!result && <Button size="sm" variant="outline" onClick={() => setOpenRes({ id: r.id })}><Upload className="mr-1 h-3.5 w-3.5" />Upload result</Button>}
                   </TableCell>
