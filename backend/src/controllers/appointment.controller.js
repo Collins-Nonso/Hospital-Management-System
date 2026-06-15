@@ -23,6 +23,19 @@ exports.getAppointments = async (req, res) => {
   });
 };
 
+exports.updateAppointment = async (req, res) => {
+  const appointment = await Appointment.findByIdAndUpdate(
+    req.params.id,
+    req.body,
+    { new: true }
+  );
+
+  res.status(200).json({
+    success: true,
+    data: appointment
+  });
+};
+
 exports.cancelAppointment = async (req, res) => {
   const appointment = await Appointment.findByIdAndUpdate(
     req.params.id,

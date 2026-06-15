@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { CalendarPlus, X, CheckCircle2, Check } from "lucide-react";
+import { CalendarPlus, X, CheckCircle2, Check, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,26 +27,56 @@ const statusColor: Record<Appointment["status"], string> = {
   cancelled: "bg-destructive/15 text-destructive",
 };
 
+type Form = {
+  patientId: string; doctorId: string; date: string; time: string;
+  status: Appointment["status"]; reason: string;
+};
+const blank = (): Form => ({ patientId: "", doctorId: "", date: "", time: "", status: "booked", reason: "" });
+
 function AppointmentsPage() {
   const appointments = useDB((d) => d.appointments);
   const patients = useDB((d) => d.patients);
   const doctors = useDB((d) => d.doctors);
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"all" | Appointment["status"]>("all");
-  const [form, setForm] = useState({ patientId: "", doctorId: "", date: "", time: "", status: "booked" as const, reason: "" });
+  const [form, setForm] = useState<Form>(blank);
+  const [editing, setEditing] = useState<Appointment | null>(null);
+  const [editForm, setEditForm] = useState<Form>(blank);
 
   const filtered = tab === "all" ? appointments : appointments.filter((a) => a.status === tab);
 
   const submit = async () => {
-    if (!form.patientId || !form.doctorId || !form.date || !form.time) { toast.error("Please complete all required fields"); return; }
+    if (!form.patientId || !form.doctorId || !form.date || !form.time) {
+      toast.error("Please complete all required fields"); return;
+    }
     try {
       // Server generates createdAt + id; only send the user-supplied fields.
       const { patientId, doctorId, date, time, reason } = form;
       await db.bookAppointment({ patientId, doctorId, date, time, reason, status: "booked" });
       toast.success("Appointment booked");
       setOpen(false);
-      setForm({ patientId: "", doctorId: "", date: "", time: "", status: "booked", reason: "" });
+      setForm(blank());
     } catch (e) { toast.error(e instanceof Error ? e.message : "Could not book"); }
+
+      };
+  const openEdit = (a: Appointment) => {
+    setEditing(a);
+    setEditForm({
+      patientId: a.patientId, doctorId: a.doctorId,
+      date: a.date ? String(a.date).slice(0, 10) : "",
+      time: a.time ?? "", status: a.status, reason: a.reason ?? "",
+    });
+  };
+  const submitEdit = async () => {
+    if (!editing) return;
+    try {
+      await db.updateAppointment(editing.id, {
+        patientId: editForm.patientId, doctorId: editForm.doctorId,
+        date: editForm.date, time: editForm.time, status: editForm.status, reason: editForm.reason,
+      });
+      toast.success("Appointment updated");
+      setEditing(null);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   };
 
   return (
@@ -59,23 +89,7 @@ function AppointmentsPage() {
             <DialogTrigger asChild><Button><CalendarPlus className="mr-1 h-4 w-4" />Book appointment</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>Book appointment</DialogTitle></DialogHeader>
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="space-y-1.5 sm:col-span-2"><Label>Patient</Label>
-                  <Select value={form.patientId} onValueChange={(v) => setForm({ ...form, patientId: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger>
-                    <SelectContent>{patients.map((p) => <SelectItem key={p.id} value={p.id}>{p.firstName} {p.lastName}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5 sm:col-span-2"><Label>Doctor</Label>
-                  <Select value={form.doctorId} onValueChange={(v) => setForm({ ...form, doctorId: v })}>
-                    <SelectTrigger><SelectValue placeholder="Select doctor" /></SelectTrigger>
-                    <SelectContent>{doctors.filter((d) => d.availability).map((d) => <SelectItem key={d.id} value={d.id}>{`${d.firstName} ${d.lastName}`} — {d.specialization}</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5"><Label>Date</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
-                <div className="space-y-1.5"><Label>Time</Label><Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} /></div>
-                <div className="space-y-1.5 sm:col-span-2"><Label>Reason</Label><Textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Optional notes" /></div>
-              </div>
+              <AppointmentFormFields form={form} setForm={setForm} patients={patients} doctors={doctors} />
               <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={submit}>Book</Button></DialogFooter>
             </DialogContent>
           </Dialog>
@@ -84,11 +98,11 @@ function AppointmentsPage() {
 
       <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)}>
         <TabsList>
-          <TabsTrigger value="all">All</TabsTrigger>
-          <TabsTrigger value="booked">Booked</TabsTrigger>
-          <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
-          <TabsTrigger value="completed">Completed</TabsTrigger>
-          <TabsTrigger value="cancelled">Cancelled</TabsTrigger>
+          <TabsTrigger value="all">All ({appointments.length})</TabsTrigger>
+          <TabsTrigger value="booked">Booked ({appointments.filter((a) => a.status === "booked").length})</TabsTrigger>
+          <TabsTrigger value="confirmed">Confirmed ({appointments.filter((a) => a.status === "confirmed").length})</TabsTrigger>
+          <TabsTrigger value="completed">Completed ({appointments.filter((a) => a.status === "completed").length})</TabsTrigger>
+          <TabsTrigger value="cancelled">Cancelled ({appointments.filter((a) => a.status === "cancelled").length})</TabsTrigger>
         </TabsList>
         <TabsContent value={tab} className="mt-4">
           <Card><CardContent className="p-4 overflow-x-auto">
@@ -110,11 +124,22 @@ function AppointmentsPage() {
                       <TableCell><Badge className={statusColor[a.status]} variant="secondary">{a.status}</Badge></TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          {a.status === "booked" && <Button size="sm" variant="outline" onClick={() => db.setAppointmentStatus(a.id, "confirmed")}><Check className="mr-1 h-3.5 w-3.5" />Confirm</Button>}
+                          <Button size="sm" variant="ghost" aria-label="Edit" onClick={() => openEdit(a)}>
+                            <Pencil className="mr-1 h-3.5 w-3.5" />Edit
+                          </Button>
+                          {a.status === "booked" && (
+                            <Button size="sm" variant="outline" onClick={() => db.setAppointmentStatus(a.id, "confirmed")}>
+                              <Check className="mr-1 h-3.5 w-3.5" />Confirm
+                            </Button>
+                          )}
                           {(a.status === "booked" || a.status === "confirmed") && (
                             <>
-                              <Button size="sm" variant="outline" onClick={() => db.setAppointmentStatus(a.id, "completed")}><CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete</Button>
-                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => db.setAppointmentStatus(a.id, "cancelled")}><X className="mr-1 h-3.5 w-3.5" />Cancel</Button>
+                              <Button size="sm" variant="outline" onClick={() => db.setAppointmentStatus(a.id, "completed")}>
+                                <CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete
+                              </Button>
+                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => db.setAppointmentStatus(a.id, "cancelled")}>
+                                <X className="mr-1 h-3.5 w-3.5" />Cancel
+                              </Button>
                             </>
                           )}
                         </div>
@@ -128,6 +153,59 @@ function AppointmentsPage() {
           </CardContent></Card>
         </TabsContent>
       </Tabs>
+            <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit appointment</DialogTitle></DialogHeader>
+          <AppointmentFormFields form={editForm} setForm={setEditForm} patients={patients} doctors={doctors} withStatus />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={submitEdit}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function AppointmentFormFields({
+  form, setForm, patients, doctors, withStatus,
+}: {
+  form: Form; setForm: (f: Form) => void;
+  patients: { id: string; firstName: string; lastName: string }[];
+  doctors: { id: string; firstName: string; lastName: string; specialization: string; availability?: boolean }[];
+  withStatus?: boolean;
+}) {
+  const docList = withStatus ? doctors : doctors.filter((d) => d.availability);
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="space-y-1.5 sm:col-span-2"><Label>Patient</Label>
+        <Select value={form.patientId} onValueChange={(v) => setForm({ ...form, patientId: v })}>
+          <SelectTrigger><SelectValue placeholder="Select patient" /></SelectTrigger>
+          <SelectContent>{patients.map((p) => <SelectItem key={p.id} value={p.id}>{p.firstName} {p.lastName}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1.5 sm:col-span-2"><Label>Doctor</Label>
+        <Select value={form.doctorId} onValueChange={(v) => setForm({ ...form, doctorId: v })}>
+          <SelectTrigger><SelectValue placeholder="Select doctor" /></SelectTrigger>
+          <SelectContent>{docList.map((d) => <SelectItem key={d.id} value={d.id}>{`${d.firstName} ${d.lastName}`} — {d.specialization}</SelectItem>)}</SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1.5"><Label>Date</Label><Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} /></div>
+      <div className="space-y-1.5"><Label>Time</Label><Input type="time" value={form.time} onChange={(e) => setForm({ ...form, time: e.target.value })} /></div>
+      {withStatus && (
+        <div className="space-y-1.5 sm:col-span-2"><Label>Status</Label>
+          <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as Appointment["status"] })}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="booked">Booked</SelectItem>
+              <SelectItem value="confirmed">Confirmed</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      <div className="space-y-1.5 sm:col-span-2"><Label>Reason</Label><Textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} placeholder="Optional notes" /></div>
     </div>
   );
 }

@@ -20,3 +20,21 @@ exports.getDoctors = async (req, res) => {
     data: doctors
   });
 };
+
+exports.updateDoctor = async (req, res) => {
+  const doctor = await doctorService.updateDoctor(req.params.id, req.body);
+
+  res.status(200).json({
+    success: true,
+    data: doctor
+  });
+};
+
+exports.deleteDoctor = async (req, res) => {
+  await doctorService.deleteDoctor(req.params.id);
+
+  res.status(204).json({
+    success: true,
+    data: null
+  });
+};

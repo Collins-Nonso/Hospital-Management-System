@@ -28,3 +28,43 @@ exports.getPrescriptions = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.updatePrescription = async (req, res, next) => {
+  try {
+    const prescription = await Prescription.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+    if (!prescription) {
+      return res.status(404).json({
+        success: false,
+        message: "Prescription not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: prescription
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.deletePrescription = async (req, res, next) => {
+  try {
+    const prescription = await Prescription.findByIdAndDelete(req.params.id);
+
+    if (!prescription) {
+      return res.status(404).json({
+        success: false,
+        message: "Prescription not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: prescription
+    });
+  } catch (error) {
+    next(error);
+  }
+};

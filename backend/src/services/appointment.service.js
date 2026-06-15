@@ -30,6 +30,10 @@ const getAppointments = async () => {
     .populate("doctor");
 }
 
+const updateAppointment = async (id, data) => {
+  return await Appointment.findByIdAndUpdate(id, data, { new: true });
+}
+
 const cancelAppointment = async (id) => {
   return await Appointment.findByIdAndUpdate(
     id,
@@ -41,5 +45,6 @@ const cancelAppointment = async (id) => {
 module.exports = {
   bookAppointment,
   getAppointments,
+  updateAppointment,
   cancelAppointment
 };

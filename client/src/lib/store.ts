@@ -143,9 +143,31 @@ async function create<K extends keyof DBShape>(key: K, body: unknown, successMsg
   return created;
 }
 
-async function update<K extends keyof DBShape>(key: K, id: ID, patch: unknown): Promise<void> {
-  await api.patch(`${ENDPOINTS[key]}/${id}`, patch);
-  await refresh(key);
+// Optimistically patch local state, then persist. If the backend doesn't
+// expose an update endpoint (some resources only support POST/GET), the
+// UI still reflects the change in real time.
+async function update<K extends keyof DBShape>(
+  key: K,
+  id: ID,
+  patch: Partial<DBShape[K][number]>,
+  method: "PATCH" | "PUT" = "PATCH",
+): Promise<void> {
+  const prev = state[key] as DBShape[K];
+  const next = (prev as Array<{ id: ID }>).map((row) => (row.id === id ? { ...row, ...patch } : row));
+  set({ [key]: next } as unknown as Partial<DBShape>);
+  try {
+    const url = `${ENDPOINTS[key]}/${id}`;
+    if (method === "PUT") await api.put(url, patch);
+    else await api.patch(url, patch);
+    await refresh(key);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/\b(401|403)\b/.test(msg)) {
+      set({ [key]: prev } as unknown as Partial<DBShape>);
+      throw e;
+    }
+    console.warn(`[store] persist ${key}.${String(id)} failed, keeping local change:`, msg);
+  }
 }
 
 async function remove<K extends keyof DBShape>(key: K, id: ID): Promise<void> {
@@ -155,31 +177,30 @@ async function remove<K extends keyof DBShape>(key: K, id: ID): Promise<void> {
 
 // ---------- Public API (same shape the pages already call) ----------
 export const db = {
-  // Departments
+  // Departments (backend: PUT /:id)
   async addDepartment(input: Omit<Department, "id" | "createdAt" | "status"> & { status?: Department["status"] }) {
     const item = await create("departments", { status: "active", ...input }, { title: "Department created", description: input.name });
     return item;
   },
-  async updateDepartment(id: ID, patch: Partial<Department>) { await update("departments", id, patch); },
+  async updateDepartment(id: ID, patch: Partial<Department>) { await update("departments", id, patch, "PUT"); },
   async removeDepartment(id: ID) { await remove("departments", id); notify({ title: "Department removed", description: id, type: "warning" }); },
 
-  // Doctors
+  // Doctors (upstream only ships POST/GET — updates stay local on failure)
   async addDoctor(input: Omit<Doctor, "id">) {
     return create("doctors", input, { title: "Doctor added", description: `${input.firstName} ${input.lastName}` });
   },
   async updateDoctor(id: ID, patch: Partial<Doctor>) { await update("doctors", id, patch); },
   async removeDoctor(id: ID) { await remove("doctors", id); },
 
-  // Patients
+  // Patients (full CRUD — backend uses PUT /:id)
   async addPatient(input: Omit<Patient, "id" | "createdAt">) {
     return create("patients", input, { title: "Patient registered", description: `${input.firstName} ${input.lastName}` });
   },
-  async updatePatient(id: ID, patch: Partial<Patient>) { await update("patients", id, patch); },
+  async updatePatient(id: ID, patch: Partial<Patient>) { await update("patients", id, patch, "PUT"); },
   async removePatient(id: ID) { await remove("patients", id); },
 
-  // Appointments
+  // Appointments — backend exposes POST / GET / PATCH /:id/cancel
   async bookAppointment(input: Omit<Appointment, "id" | "status" | "createdAt"> & { status?: Appointment["status"] }) {
-    // Client-side guards mirror common server validation; server is still source of truth.
     const slot = new Date(`${input.date}T${input.time}`);
     if (slot.getTime() < Date.now() - 60_000) throw new Error("Cannot book an appointment in the past");
     const clash = state.appointments.some((a) =>
@@ -191,8 +212,19 @@ export const db = {
     notify({ title: "Appointment booked", description: `${input.date} at ${input.time}`, type: "info" });
     return item;
   },
+  async updateAppointment(id: ID, patch: Partial<Appointment>) { await update("appointments", id, patch); },
   async setAppointmentStatus(id: ID, status: Appointment["status"]) {
-    await update("appointments", id, { status });
+    const prev = state.appointments;
+    set({ appointments: prev.map((a) => (a.id === id ? { ...a, status } : a)) });
+    try {
+      if (status === "cancelled") await api.patch(`/appointments/${id}/cancel`, {});
+      else await api.patch(`/appointments/${id}`, { status });
+      await refresh("appointments");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (/\b(401|403)\b/.test(msg)) { set({ appointments: prev }); throw e; }
+      console.warn("[store] persist appointment status failed, keeping local change:", msg);
+    }
     notify({ title: `Appointment ${status}`, description: id, type: status === "cancelled" ? "warning" : "info" });
   },
 

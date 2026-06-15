@@ -12,7 +12,17 @@ const getPrescriptions = async () => {
     .populate("doctor");
 };
 
+const updatePrescription = async (id, data) => {
+  return await Prescription.findByIdAndUpdate(id, data, { new: true });
+};
+
+const deletePrescription = async (id) => {
+  return await Prescription.findByIdAndDelete(id);
+};
+
 module.exports = {
   createPrescription,
-  getPrescriptions
+  getPrescriptions,
+  updatePrescription,
+  deletePrescription
 };

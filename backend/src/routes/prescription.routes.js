@@ -7,5 +7,7 @@ const protect = require("../middlewares/auth.middleware");
 
 router.post("/", protect, prescriptionController.createPrescription);
 router.get("/", protect, prescriptionController.getPrescriptions);
+router.patch("/:id", protect, prescriptionController.updatePrescription);
+router.delete("/:id", protect, prescriptionController.deletePrescription);
 
 module.exports = router;
