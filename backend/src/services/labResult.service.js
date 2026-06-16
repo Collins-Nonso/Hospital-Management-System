@@ -35,9 +35,11 @@ const getSingleLabResult = async (
     .populate("uploadedBy");
 };
 
+const createLabResult = uploadLabResult; // alias used by labResult.controller.js
 
 module.exports = {
   uploadLabResult,
+  createLabResult,
   getLabResults,
   getSingleLabResult
 };
