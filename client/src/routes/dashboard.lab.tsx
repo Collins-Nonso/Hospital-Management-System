@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useDB, db } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard/lab")({
   head: () => ({ meta: [{ title: "Laboratory — MediCore" }] }),
@@ -24,6 +25,7 @@ function LabPage() {
   const results = useDB((d) => d.labResults);
   const patients = useDB((d) => d.patients);
   const doctors = useDB((d) => d.doctors);
+  const { user } = useAuth();
 
   const [openReq, setOpenReq] = useState(false);
   const [reqForm, setReqForm] = useState({ patientId: "", doctorId: "", testName: "", instructions: "" });
@@ -45,8 +47,16 @@ function LabPage() {
 
   const submitRes = async () => {
     if (!openRes) return;
+    if (!resultText.trim()) { toast.error("Result text required"); return; }
+    const req = requests.find((r) => r.id === openRes.id);
+    if (!req) { toast.error("Lab request not found"); return; }
     try {
-      await db.addLabResult({ labRequestId: openRes.id, result: resultText });
+      await db.addLabResult({
+        labRequestId: openRes.id,
+        patientId: req.patientId,
+        uploadedBy: user?.id ?? "",
+        result: resultText,
+      });
       toast.success("Result uploaded");
       setOpenRes(null);
       setResultText("");

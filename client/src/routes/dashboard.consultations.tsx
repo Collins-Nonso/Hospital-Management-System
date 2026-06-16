@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -22,7 +22,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useDB, db } from "@/lib/store";
+import { useDB, db, type Consultation } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard/consultations")({
   head: () => ({ meta: [{ title: "Consultations — MediCore" }] }),
@@ -34,7 +35,11 @@ function ConsultationsPage() {
   const appointments = useDB((d) => d.appointments);
   const patients = useDB((d) => d.patients);
   const doctors = useDB((d) => d.doctors);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Consultation | null>(null);
+  const [editForm, setEditForm] = useState({ symptoms: "", diagnosis: "", treatmentPlan: "", status: "ongoing" as "ongoing" | "completed" });
   const [form, setForm] = useState({
     appointmentId: "",
     patientId: "",
@@ -44,6 +49,29 @@ function ConsultationsPage() {
     treatmentPlan: "",
     status: "ongoing" as "ongoing" | "completed",
   });
+
+    const openEdit = (c: Consultation) => {
+    setEditing(c);
+    setEditForm({
+      symptoms: (c.symptoms ?? []).join(", "),
+      diagnosis: c.diagnosis ?? "",
+      treatmentPlan: c.treatmentPlan ?? "",
+      status: c.status ?? "ongoing",
+    });
+  };
+  const submitEdit = async () => {
+    if (!editing) return;
+    try {
+      await db.updateConsultation(editing.id, {
+        symptoms: [...new Set(editForm.symptoms.split(",").map((s) => s.trim()).filter(Boolean))],
+        diagnosis: editForm.diagnosis,
+        treatmentPlan: editForm.treatmentPlan,
+        status: editForm.status,
+      });
+      toast.success("Consultation updated");
+      setEditing(null);
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+  };
 
   const submit = () => {
     const appt = appointments.find((a) => a.id === form.appointmentId);
@@ -168,8 +196,15 @@ function ConsultationsPage() {
                   <div className="font-display text-lg font-semibold">
                     {p ? `${p.firstName} ${p.lastName}` : "—"}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {new Date(c.createdAt).toLocaleDateString()}
+                  <div className="flex items-center gap-2">
+                    <div className="text-xs text-muted-foreground">
+                      {new Date(c.createdAt).toLocaleDateString()}
+                    </div>
+                    {isAdmin && (
+                      <Button size="icon" variant="ghost" aria-label="Edit consultation" onClick={() => openEdit(c)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
                 <div className="text-xs text-muted-foreground">
@@ -199,6 +234,36 @@ function ConsultationsPage() {
           </div>
         )}
       </div>
+
+        <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Edit consultation</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5"><Label>Symptoms</Label>
+              <Textarea value={editForm.symptoms} onChange={(e) => setEditForm({ ...editForm, symptoms: e.target.value })} />
+            </div>
+            <div className="space-y-1.5"><Label>Diagnosis</Label>
+              <Textarea value={editForm.diagnosis} onChange={(e) => setEditForm({ ...editForm, diagnosis: e.target.value })} />
+            </div>
+            <div className="space-y-1.5"><Label>Treatment plan</Label>
+              <Textarea value={editForm.treatmentPlan} onChange={(e) => setEditForm({ ...editForm, treatmentPlan: e.target.value })} />
+            </div>
+            <div className="space-y-1.5"><Label>Status</Label>
+              <Select value={editForm.status} onValueChange={(v) => setEditForm({ ...editForm, status: v as "ongoing" | "completed" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="ongoing">Ongoing</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button onClick={submitEdit}>Save changes</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

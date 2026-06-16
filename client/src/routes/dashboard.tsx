@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { Topbar } from "@/components/topbar";
 import { useAuth } from "@/lib/auth";
 import { getToken } from "@/lib/api";
+import { reloadAll } from "@/lib/store";
 
 export const Route = createFileRoute("/dashboard")({
   component: DashboardLayout,
@@ -20,6 +21,16 @@ function DashboardLayout() {
   useEffect(() => {
     if (!loading && !isAuthenticated) navigate({ to: "/login", search: { redirect: "/dashboard" }, replace: true });
   }, [loading, isAuthenticated, navigate]);
+
+  // Real-time polling: refresh DB every 15s and on tab focus while authenticated.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const tick = () => { void reloadAll(); };
+    const id = window.setInterval(tick, 15000);
+    const onFocus = () => { if (document.visibilityState === "visible") tick(); };
+    document.addEventListener("visibilitychange", onFocus);
+    return () => { window.clearInterval(id); document.removeEventListener("visibilitychange", onFocus); };
+  }, [isAuthenticated]);
 
   if (loading || !isAuthenticated) {
     return (

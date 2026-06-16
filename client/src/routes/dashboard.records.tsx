@@ -60,11 +60,22 @@ function RecordsPage() {
                   <Select value={form.consultationId} onValueChange={(v) => setForm({ ...form, consultationId: v })}>
                     <SelectTrigger><SelectValue placeholder="Select consultation" /></SelectTrigger>
                     <SelectContent>
-                      {consultations.map((c) => (
-                        <SelectItem key={c.id} value={c.id}>
-                          {c.diagnosis}
-                        </SelectItem>
-                      ))}
+                      {consultations.length === 0 && (
+                        <div className="px-3 py-2 text-xs text-muted-foreground">No consultations yet</div>
+                      )}
+                      {consultations.map((c) => {
+                        const pt = patients.find((x) => x.id === c.patientId);
+                        const doc = doctors.find((x) => x.id === c.doctorId);
+                        const name = pt ? `${pt.firstName} ${pt.lastName}` : "Unknown patient";
+                        const docName = doc ? `${doc.firstName} ${doc.lastName}` : "—";
+                        const when = new Date(c.createdAt).toLocaleDateString();
+                        const dx = c.diagnosis?.trim() || "No diagnosis";
+                        return (
+                          <SelectItem key={c.id} value={c.id}>
+                            {name} · {docName} · {when} — {dx}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>

@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDB, db, type Doctor } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard/doctors")({
   head: () => ({ meta: [{ title: "Doctors — MediCore" }] }),
@@ -38,6 +39,8 @@ const fromDoctor = (d: Doctor): DoctorForm => ({
 function DoctorsPage() {
   const doctors = useDB((d) => d.doctors);
   const departments = useDB((d) => d.departments);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<DoctorForm>(blank);
   const [editing, setEditing] = useState<Doctor | null>(null);
@@ -88,14 +91,14 @@ function DoctorsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Specialization</TableHead>
-                <TableHead>Department</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Available</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className="whitespace-nowrap">Name</TableHead>
+                <TableHead className="whitespace-nowrap">Specialization</TableHead>
+                <TableHead className="whitespace-nowrap">Department</TableHead>
+                <TableHead className="whitespace-nowrap">Email</TableHead>
+                <TableHead className="whitespace-nowrap">Phone</TableHead>
+                <TableHead className="whitespace-nowrap">Available</TableHead>
+                <TableHead className="whitespace-nowrap">Status</TableHead>
+                <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="w-full">
@@ -105,12 +108,13 @@ function DoctorsPage() {
                   <TableRow key={d.id}>
                     <TableCell className="font-medium">{`${d.firstName} ${d.lastName}`}</TableCell>
                     <TableCell>{d.specialization}</TableCell>
-                    <TableCell>{dept?.name ?? "—"}</TableCell>
+                    <TableCell>{dept?.name ?? "N/A"}</TableCell>
                     <TableCell className="text-muted-foreground">{d.email}</TableCell>
                     <TableCell>{d.phone}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Switch
+                          disabled={!isAdmin}
                           checked={!!d.availability}
                           onCheckedChange={async (v) => {
                             try {
@@ -134,20 +138,24 @@ function DoctorsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" aria-label="Edit" onClick={() => openEdit(d)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label="Delete"
-                          onClick={async () => {
-                            try { await db.removeDoctor(d.id); toast.success("Doctor removed"); }
-                            catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
+                        {isAdmin ? (
+                          <>
+                            <Button variant="ghost" size="icon" aria-label="Edit" onClick={() => openEdit(d)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Delete"
+                              onClick={async () => {
+                                try { await db.removeDoctor(d.id); toast.success("Doctor removed"); }
+                                catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          </>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
                       </div>
                     </TableCell>
                   </TableRow>

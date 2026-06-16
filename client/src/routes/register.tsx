@@ -77,11 +77,11 @@ function RegisterPage() {
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="admin" disabled>Admin</SelectItem>
-                <SelectItem value="doctor" disabled>Doctor</SelectItem>
-                <SelectItem value="nurse" disabled>Nurse</SelectItem>
+                <SelectItem value="doctor">Doctor</SelectItem>
+                <SelectItem value="nurse">Nurse</SelectItem>
                 <SelectItem value="receptionist">Receptionist</SelectItem>
-                <SelectItem value="pharmacist" disabled>Pharmacist</SelectItem>
-                <SelectItem value="lab_scientist" disabled>Lab Scientist</SelectItem>
+                <SelectItem value="pharmacist">Pharmacist</SelectItem>
+                <SelectItem value="lab_scientist">Lab Scientist</SelectItem>
               </SelectContent>
             </Select>
           </div>

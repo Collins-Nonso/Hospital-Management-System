@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useDB, db, type Appointment } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard/appointments")({
   head: () => ({ meta: [{ title: "Appointments - MediCore" }] }),
@@ -37,6 +38,8 @@ function AppointmentsPage() {
   const appointments = useDB((d) => d.appointments);
   const patients = useDB((d) => d.patients);
   const doctors = useDB((d) => d.doctors);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<"all" | Appointment["status"]>("all");
   const [form, setForm] = useState<Form>(blank);
@@ -124,9 +127,11 @@ function AppointmentsPage() {
                       <TableCell><Badge className={statusColor[a.status]} variant="secondary">{a.status}</Badge></TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          <Button size="sm" variant="ghost" aria-label="Edit" onClick={() => openEdit(a)}>
-                            <Pencil className="mr-1 h-3.5 w-3.5" />Edit
-                          </Button>
+                          {isAdmin && (
+                            <Button size="sm" variant="ghost" aria-label="Edit" onClick={() => openEdit(a)}>
+                              <Pencil className="mr-1 h-3.5 w-3.5" />Edit
+                            </Button>
+                          )}
                           {a.status === "booked" && (
                             <Button size="sm" variant="outline" onClick={() => db.setAppointmentStatus(a.id, "confirmed")}>
                               <Check className="mr-1 h-3.5 w-3.5" />Confirm
@@ -137,9 +142,11 @@ function AppointmentsPage() {
                               <Button size="sm" variant="outline" onClick={() => db.setAppointmentStatus(a.id, "completed")}>
                                 <CheckCircle2 className="mr-1 h-3.5 w-3.5" />Complete
                               </Button>
-                              <Button size="sm" variant="ghost" className="text-destructive" onClick={() => db.setAppointmentStatus(a.id, "cancelled")}>
-                                <X className="mr-1 h-3.5 w-3.5" />Cancel
-                              </Button>
+                              {isAdmin && (
+                                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => db.setAppointmentStatus(a.id, "cancelled")}>
+                                  <X className="mr-1 h-3.5 w-3.5" />Cancel
+                                </Button>
+                              )}
                             </>
                           )}
                         </div>

@@ -8,11 +8,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useDB } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
-
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, Legend,
+} from "recharts";
 export const Route = createFileRoute("/dashboard/")({
-  head: () => ({ meta: [{ title: "Dashboard — MediCore" }] }),
+  head: () => ({ meta: [{ title: "Dashboard - MediCore" }] }),
   component: DashboardHome,
 });
+
 
 function DashboardHome() {
   const { user } = useAuth();
@@ -59,6 +63,70 @@ function DashboardHome() {
             </Card>
           </Link>
         ))}
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardContent className="p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-lg font-semibold">Records overview</h2>
+              <span className="text-xs text-muted-foreground">Live from database</span>
+            </div>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={[
+                  { name: "Patients", value: db.patients.length },
+                  { name: "Doctors", value: db.doctors.length },
+                  { name: "Departments", value: db.departments.length },
+                  { name: "Appointments", value: db.appointments.length },
+                  { name: "Consultations", value: db.consultations.length },
+                  { name: "Records", value: db.records.length },
+                  { name: "Lab", value: db.labRequests.length },
+                  { name: "Rx", value: db.prescriptions.length },
+                  { name: "Bills", value: db.billings.length },
+                ]}>
+                  <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-25} textAnchor="end" height={60} />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="font-display text-lg font-semibold">Distribution</h2>
+              <span className="text-xs text-muted-foreground">Share of total records</span>
+            </div>
+            <div className="h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: "Patients", value: db.patients.length },
+                      { name: "Doctors", value: db.doctors.length },
+                      { name: "Appointments", value: db.appointments.length },
+                      { name: "Consultations", value: db.consultations.length },
+                      { name: "Bills", value: db.billings.length },
+                    ].filter((d) => d.value > 0)}
+                    dataKey="value"
+                    nameKey="name"
+                    outerRadius={90}
+                    label
+                  >
+                    {["var(--primary)","var(--info)","var(--success)","var(--warning)","var(--destructive)"].map((c, i) => (
+                      <Cell key={i} fill={c} />
+                    ))}
+                  </Pie>
+                  <Legend />
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">

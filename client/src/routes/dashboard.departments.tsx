@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from "@/components/ui/select";
 import { useDB, db, type Department } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard/departments")({
   head: () => ({ meta: [{ title: "Departments — MediCore" }] }),
@@ -28,6 +29,8 @@ const fromDept = (d: Department): Form => ({
 function DepartmentsPage() {
   const departments = useDB((d) => d.departments);
   const doctors = useDB((d) => d.doctors);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<Form>(blank);
   const [editing, setEditing] = useState<Department | null>(null);
@@ -92,22 +95,24 @@ function DepartmentsPage() {
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">{d.description || "No description"}</p>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" aria-label="Edit" onClick={() => openEdit(d)}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      aria-label="Delete"
-                      onClick={async () => {
-                        try { await db.removeDepartment(d.id); toast.success("Department removed"); }
-                        catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
+                  {isAdmin && (
+                    <div className="flex items-center gap-1">
+                      <Button variant="ghost" size="icon" aria-label="Edit" onClick={() => openEdit(d)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Delete"
+                        onClick={async () => {
+                          try { await db.removeDepartment(d.id); toast.success("Department removed"); }
+                          catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+                        }}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div className="mt-4 flex items-center justify-between border-t pt-3 text-sm">
                   <div className="text-muted-foreground">
@@ -116,7 +121,7 @@ function DepartmentsPage() {
                   <div className="flex items-center gap-2 text-xs">
                     Active
                     <Switch
-                      checked={d.status === "active"}
+                      disabled={!isAdmin}
                       onCheckedChange={async (v) => {
                         try {
                           await db.updateDepartment(d.id, { status: v ? "active" : "inactive" });

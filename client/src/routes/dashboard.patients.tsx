@@ -18,6 +18,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useDB, db, type Patient } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard/patients")({
   head: () => ({ meta: [{ title: "Patients — MediCore" }] }),
@@ -77,6 +78,8 @@ function toPayload(data: ReturnType<typeof schema.parse>) {
 
 function PatientsPage() {
   const patients = useDB((d) => d.patients);
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
   const [q, setQ] = useState("");
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<FormState>(blank);
@@ -165,16 +168,20 @@ function PatientsPage() {
                     <TableCell>{p.medicalHistory?.length ? p.medicalHistory.join(", ") : "—"}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="icon" aria-label="Edit" onClick={() => openEdit(p)}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild><Button variant="ghost" size="icon" aria-label="Delete"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader><AlertDialogTitle>Remove patient?</AlertDialogTitle><AlertDialogDescription>This will permanently remove {p.firstName} {p.lastName}.</AlertDialogDescription></AlertDialogHeader>
-                            <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={async () => { try { await db.removePatient(p.id); toast.success("Patient removed"); } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); } }}>Remove</AlertDialogAction></AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
+                        {isAdmin ? (
+                          <>
+                            <Button variant="ghost" size="icon" aria-label="Edit" onClick={() => openEdit(p)}>
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild><Button variant="ghost" size="icon" aria-label="Delete"><Trash2 className="h-4 w-4 text-destructive" /></Button></AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader><AlertDialogTitle>Remove patient?</AlertDialogTitle><AlertDialogDescription>This will permanently remove {p.firstName} {p.lastName}.</AlertDialogDescription></AlertDialogHeader>
+                                <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={async () => { try { await db.removePatient(p.id); toast.success("Patient removed"); } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); } }}>Remove</AlertDialogAction></AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </>
+                        ) : <span className="text-xs text-muted-foreground">—</span>}
                       </div>
                     </TableCell>
                   </TableRow>

@@ -101,8 +101,8 @@ export async function bootstrap(): Promise<void> {
 }
 
 export async function reloadAll(): Promise<void> {
-  booted = false;
-  await bootstrap();
+  if (!getToken()) return;
+  await Promise.all((Object.keys(ENDPOINTS) as (keyof DBShape)[]).map((k) => refresh(k)));
 }
 
 // ---------- React bindings ----------
@@ -185,11 +185,11 @@ export const db = {
   async updateDepartment(id: ID, patch: Partial<Department>) { await update("departments", id, patch, "PUT"); },
   async removeDepartment(id: ID) { await remove("departments", id); notify({ title: "Department removed", description: id, type: "warning" }); },
 
-  // Doctors (upstream only ships POST/GET — updates stay local on failure)
+  // Doctors (backend exposes PUT /:id and DELETE /:id)
   async addDoctor(input: Omit<Doctor, "id">) {
     return create("doctors", input, { title: "Doctor added", description: `${input.firstName} ${input.lastName}` });
   },
-  async updateDoctor(id: ID, patch: Partial<Doctor>) { await update("doctors", id, patch); },
+  async updateDoctor(id: ID, patch: Partial<Doctor>) { await update("doctors", id, patch, "PUT"); },
   async removeDoctor(id: ID) { await remove("doctors", id); },
 
   // Patients (full CRUD — backend uses PUT /:id)
@@ -233,6 +233,8 @@ export const db = {
     return create("consultations", input, { title: "Consultation recorded", description: input.diagnosis });
   },
 
+  async updateConsultation(id: ID, patch: Partial<Consultation>) { await update("consultations", id, patch, "PUT"); },
+
   // Medical records
   async addRecord(input: Omit<MedicalRecord, "id" | "createdAt">) {
     const item = await create("records", input);
@@ -246,7 +248,7 @@ export const db = {
     notify({ title: "Lab request created", description: input.testName, type: "info" });
     return item;
   },
-  async addLabResult(input: { labRequestId: ID; result: string }) {
+  async addLabResult(input: { labRequestId: ID; patientId: ID; uploadedBy: ID; result: string; remarks?: string }) {
     if (state.labResults.some((r) => r.labRequestId === input.labRequestId)) {
       throw new Error("Result already uploaded for this request");
     }
@@ -267,7 +269,13 @@ export const db = {
     if (state.pharmacies.some((x) => x.prescriptionId === input.prescriptionId)) {
       throw new Error("Prescription already dispensed");
     }
-    const created = await api.post<Pharmacy>(`/prescriptions/${input.prescriptionId}/dispense`, input);
+    const body = {
+      prescriptionId: input.prescriptionId,
+      patientId: input.patientId,
+      pharmacistId: input.pharmacistId,
+      drugsDispensed: input.drugs,
+    };
+    const created = await api.post<Pharmacy>(`/pharmacies/dispense`, body);
     await Promise.all([refresh("pharmacies"), refresh("prescriptions")]);
     notify({ title: "Prescription dispensed", description: input.drugs.join(", "), type: "success" });
     return created;
@@ -284,7 +292,7 @@ export const db = {
     return item;
   },
   async payBill(id: ID) {
-    await api.post(`/billings/${id}/pay`, {});
+    await api.patch(`/billings/${id}/pay`, {});
     await refresh("billings");
     notify({ title: "Payment received", description: `Bill ${id}`, type: "success" });
   },
@@ -296,6 +304,6 @@ export const db = {
   },
   async markAllNotificationsRead() {
     set({ notifications: state.notifications.map((n) => ({ ...n, read: true })) });
-    try { await api.post("/notifications/read-all", {}); } catch {}
+    try { await api.patch("/notifications/read-all", {}); } catch {}
   },
 };
