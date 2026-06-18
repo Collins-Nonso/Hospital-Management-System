@@ -11,9 +11,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useDB, db, type Medication } from "@/lib/store";
+import { prescriptionSchema, scrub, validate } from "@/lib/validation";
 
 export const Route = createFileRoute("/dashboard/prescriptions")({
-  head: () => ({ meta: [{ title: "Prescriptions — MediCore" }] }),
+  head: () => ({ meta: [{ title: "Prescriptions - MediCore" }] }),
   component: PrescriptionsPage,
 });
 
@@ -30,15 +31,17 @@ function PrescriptionsPage() {
   const [meds, setMeds] = useState<Medication[]>([emptyMed()]);
 
   const submit = async () => {
-    if (!patientId || !doctorId) { toast.error("Select patient and doctor"); return; }
-    const valid = meds.every((m) => m.medicationName.trim() && m.dosage.trim() && m.frequency.trim() && m.duration.trim());
-    if (!valid) { toast.error("Complete all medication fields"); return; }
+    const validated = validate(prescriptionSchema, { patientId, doctorId, medications: meds });
+    if (!validated) return;
     try {
       await db.addPrescription({ patientId, doctorId, medications: meds });
       toast.success("Prescription created");
       setOpen(false); setPatientId(""); setDoctorId(""); setMeds([emptyMed()]);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   };
+
+  const setMed = (i: number, patch: Partial<Medication>) =>
+    setMeds(meds.map((x, j) => (j === i ? { ...x, ...patch } : x)));
 
   return (
     <div className="space-y-6">
@@ -77,11 +80,11 @@ function PrescriptionsPage() {
                 </div>
                 {meds.map((m, i) => (
                   <div key={i} className="grid gap-2 rounded-md border p-3 sm:grid-cols-5">
-                    <Input className="sm:col-span-2" placeholder="Name (e.g. Paracetamol)" value={m.medicationName} onChange={(e) => setMeds(meds.map((x, j) => j === i ? { ...x, medicationName: e.target.value } : x))} />
-                    <Input placeholder="Dosage (500mg)" value={m.dosage} onChange={(e) => setMeds(meds.map((x, j) => j === i ? { ...x, dosage: e.target.value } : x))} />
-                    <Input placeholder="Frequency (BID)" value={m.frequency} onChange={(e) => setMeds(meds.map((x, j) => j === i ? { ...x, frequency: e.target.value } : x))} />
+                    <Input maxLength={80} className="sm:col-span-2" placeholder="Name (e.g. Paracetamol)" value={m.medicationName} onChange={(e) => setMed(i, { medicationName: scrub(e.target.value) })} />
+                    <Input maxLength={40} placeholder="Dosage (500mg)" value={m.dosage} onChange={(e) => setMed(i, { dosage: scrub(e.target.value) })} />
+                    <Input maxLength={40} placeholder="Frequency (BID)" value={m.frequency} onChange={(e) => setMed(i, { frequency: scrub(e.target.value) })} />
                     <div className="flex gap-1">
-                      <Input placeholder="Duration (5 days)" value={m.duration} onChange={(e) => setMeds(meds.map((x, j) => j === i ? { ...x, duration: e.target.value } : x))} />
+                      <Input maxLength={40} placeholder="Duration (5 days)" value={m.duration} onChange={(e) => setMed(i, { duration: scrub(e.target.value) })} />
                       {meds.length > 1 && <Button variant="ghost" size="icon" onClick={() => setMeds(meds.filter((_, j) => j !== i))}><Trash2 className="h-4 w-4 text-destructive" /></Button>}
                     </div>
                   </div>

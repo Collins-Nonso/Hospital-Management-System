@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
 import {
   Activity, CalendarClock, FlaskConical, Pill, Receipt, ShieldCheck,
   Stethoscope, Users, ArrowRight, Moon, Sun,
@@ -15,7 +16,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Welcome to MediCore - A Modern Hospital Management Platform" },
-      { name: "description", content: "An end-to-end platform for patient care, appointments, lab, pharmacy and billing — built for modern hospitals." },
+      { name: "description", content: "An end-to-end platform for patient care, appointments, lab, pharmacy and billing - built for modern hospitals." },
       { property: "og:title", content: "MediCore Modern Hospital Management" },
       { property: "og:description", content: "An end-to-end platform for patient care, appointments, lab, pharmacy and billing." },
     ],
@@ -35,6 +36,8 @@ const features = [
 function Landing() {
   const { theme, toggle } = useTheme();
   const { user, loading } = useAuth();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const isAuthenticated = !loading && Boolean(user && getToken());
 
   return (
@@ -52,7 +55,7 @@ function Landing() {
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
-              {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              {mounted ? (theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />) : <span className="h-4 w-4" />}
             </Button>
             {isAuthenticated ? (
               <Button asChild><Link to="/dashboard">Open dashboard</Link></Button>
@@ -95,7 +98,7 @@ function Landing() {
               <Button size="lg" variant="outline" asChild><a href="/login">Sign in</a></Button>
             </div>
             <div className="mt-3 text-xs text-muted-foreground">
-              Demo accounts: <code className="rounded bg-muted px-1.5 py-0.5">receptionist@medicore.com / recep123</code>
+              Demo accounts: <code className="rounded bg-muted px-1.5 py-0.5">scientist@medicore.com / lab123</code>
             </div>
           </div>
         </div>
@@ -147,18 +150,7 @@ function Landing() {
         </div>
       </section>
 
-      {/* <footer className="border-t">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-muted-foreground md:flex-row">
-          <div>© {new Date().getFullYear()} MediCore. All rights reserved.</div>
-          <div className="flex items-center gap-1">Designed with ❤️ by <a href="https://github.com/Collins-Nonso" className="hover:text-foreground" target="_blank" rel="noopener noreferrer">Collins-Nonso</a></div>
-          <div className="flex items-center gap-4">
-            <a href="/login" className="hover:text-foreground">Sign in</a>
-            <a href="/register" className="hover:text-foreground">Register</a>
-          </div>
-        </div>
-      </footer> */}
-
-            <footer className="border-t bg-secondary/30">
+      <footer className="border-t bg-secondary/30">
         <div className="mx-auto max-w-6xl px-4 py-12">
           <div className="mb-10 flex items-center gap-3">
             <img src={logoAsset} alt="MediCore — Unifying Healthcare, Streamlining Care" className="h-12 w-auto dark:brightness-0 dark:invert" />

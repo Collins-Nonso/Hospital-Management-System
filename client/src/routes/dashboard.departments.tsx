@@ -10,20 +10,36 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectTrigger, SelectValue, SelectItem } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+} from "@/components/ui/select";
 import { useDB, db, type Department } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
+import { departmentSchema, scrub, validate } from "@/lib/validation";
 
 export const Route = createFileRoute("/dashboard/departments")({
-  head: () => ({ meta: [{ title: "Departments — MediCore" }] }),
+  head: () => ({ meta: [{ title: "Departments - MediCore" }] }),
   component: DepartmentsPage,
 });
 
 type Form = { name: string; description: string; status: "active" | "inactive" };
 const blank = (): Form => ({ name: "", description: "", status: "active" });
 const fromDept = (d: Department): Form => ({
-  name: d.name, description: d.description ?? "", status: d.status ?? "active",
+  name: d.name,
+  description: d.description ?? "",
+  status: d.status ?? "active",
 });
 
 function DepartmentsPage() {
@@ -35,15 +51,23 @@ function DepartmentsPage() {
   const [form, setForm] = useState<Form>(blank);
   const [editing, setEditing] = useState<Department | null>(null);
   const [editForm, setEditForm] = useState<Form>(blank);
-  const openEdit = (d: Department) => { setEditing(d); setEditForm(fromDept(d)); };
+  const openEdit = (d: Department) => {
+    setEditing(d);
+    setEditForm(fromDept(d));
+  };
   const submitEdit = async () => {
     if (!editing) return;
-    if (!editForm.name.trim()) { toast.error("Name is required"); return; }
+    if (!editForm.name.trim()) {
+      toast.error("Name is required");
+      return;
+    }
     try {
       await db.updateDepartment(editing.id, editForm);
       toast.success("Department updated");
       setEditing(null);
-    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed");
+    }
   };
 
   return (
@@ -54,22 +78,43 @@ function DepartmentsPage() {
         actions={
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
-              <Button><Plus className="mr-1 h-4 w-4" />New department</Button>
+              <Button>
+                <Plus className="mr-1 h-4 w-4" />
+                New department
+              </Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader><DialogTitle>Create department</DialogTitle></DialogHeader>
-              <DeptForm form={form} setForm={setForm} />
+              <DialogHeader>
+                <DialogTitle>Create department</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-1.5">
+                <Label>Name</Label>
+                <Input
+                  maxLength={80}
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: scrub(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Description</Label>
+                <Textarea
+                  maxLength={500}
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: scrub(e.target.value) })}
+                />
+              </div>
               <DialogFooter>
-               <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
                 <Button
                   onClick={async () => {
-                    if (!form.name.trim()) { toast.error("Name is required"); return; }
-                    try {
-                      await db.addDepartment(form);
-                      toast.success("Department created");
-                      setOpen(false);
-                      setForm(blank());
-                    } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+                    const data = validate(departmentSchema, form);
+                    if (!data) return;
+                    db.addDepartment(data);
+                    toast.success("Department created");
+                    setOpen(false);
+                    setForm(blank());
                   }}
                 >
                   Create
@@ -89,15 +134,25 @@ function DepartmentsPage() {
                   <div>
                     <div className="flex items-center gap-2">
                       <h3 className="font-display text-lg font-semibold">{d.name}</h3>
-                      <Badge variant={d.status === "active" ? "default" : "secondary"} className="capitalize">
+                      <Badge
+                        variant={d.status === "active" ? "default" : "secondary"}
+                        className="capitalize"
+                      >
                         {d.status}
                       </Badge>
                     </div>
-                    <p className="mt-1 text-sm text-muted-foreground">{d.description || "No description"}</p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {d.description || "No description"}
+                    </p>
                   </div>
                   {isAdmin && (
                     <div className="flex items-center gap-1">
-                      <Button variant="ghost" size="icon" aria-label="Edit" onClick={() => openEdit(d)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Edit"
+                        onClick={() => openEdit(d)}
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
@@ -105,8 +160,12 @@ function DepartmentsPage() {
                         size="icon"
                         aria-label="Delete"
                         onClick={async () => {
-                          try { await db.removeDepartment(d.id); toast.success("Department removed"); }
-                          catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+                          try {
+                            await db.removeDepartment(d.id);
+                            toast.success("Department removed");
+                          } catch (e) {
+                            toast.error(e instanceof Error ? e.message : "Failed");
+                          }
                         }}
                       >
                         <Trash2 className="h-4 w-4 text-destructive" />
@@ -119,14 +178,16 @@ function DepartmentsPage() {
                     {count} doctor{count === 1 ? "" : "s"}
                   </div>
                   <div className="flex items-center gap-2 text-xs">
-                    Active
+                    Toggle active status
                     <Switch
                       disabled={!isAdmin}
                       onCheckedChange={async (v) => {
                         try {
                           await db.updateDepartment(d.id, { status: v ? "active" : "inactive" });
                           toast.success("Status updated");
-                        } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
+                        } catch (e) {
+                          toast.error(e instanceof Error ? e.message : "Failed");
+                        }
                       }}
                     />
                   </div>
@@ -136,12 +197,16 @@ function DepartmentsPage() {
           );
         })}
       </div>
-            <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
+      <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Edit department</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>Edit department</DialogTitle>
+          </DialogHeader>
           <DeptForm form={editForm} setForm={setEditForm} />
           <DialogFooter>
-            <Button variant="outline" onClick={() => setEditing(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
             <Button onClick={submitEdit}>Save changes</Button>
           </DialogFooter>
         </DialogContent>
@@ -159,15 +224,23 @@ function DeptForm({ form, setForm }: { form: Form; setForm: (f: Form) => void })
       </div>
       <div className="space-y-1.5">
         <Label>Description</Label>
-        <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+        <Textarea
+          value={form.description}
+          onChange={(e) => setForm({ ...form, description: e.target.value })}
+        />
       </div>
       <div className="flex items-center justify-between rounded-md border p-3">
         <div className="space-y-0.5 w-full">
           <div className="text-sm font-medium">Status</div>
           <div className="text-xs text-muted-foreground">Department's current status</div>
         </div>
-        <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v as "active" | "inactive" })}>
-          <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+        <Select
+          value={form.status}
+          onValueChange={(v) => setForm({ ...form, status: v as "active" | "inactive" })}
+        >
+          <SelectTrigger className="w-36">
+            <SelectValue />
+          </SelectTrigger>
           <SelectContent>
             <SelectItem value="active">Active</SelectItem>
             <SelectItem value="inactive">Inactive</SelectItem>

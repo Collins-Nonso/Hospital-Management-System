@@ -74,7 +74,7 @@ function LoginPage() {
           </p>
           <div className="rounded-md border bg-muted/40 p-3 text-xs text-muted-foreground">
             <div className="font-medium text-foreground">Demo accounts</div>
-            <div>receptionist@medicore.com / recep123</div>
+            <div>scientist@medicore.com / lab123</div>
           </div>
         </form>
       </CardContent>

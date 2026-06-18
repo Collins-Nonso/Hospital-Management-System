@@ -24,9 +24,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useDB, db, type Consultation } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
+import { consultationSchema, scrub, validate } from "@/lib/validation";
 
 export const Route = createFileRoute("/dashboard/consultations")({
-  head: () => ({ meta: [{ title: "Consultations — MediCore" }] }),
+  head: () => ({ meta: [{ title: "Consultations - MediCore" }] }),
   component: ConsultationsPage,
 });
 
@@ -74,31 +75,14 @@ function ConsultationsPage() {
   };
 
   const submit = () => {
-    const appt = appointments.find((a) => a.id === form.appointmentId);
+    const data = validate(consultationSchema, form);
+    if (!data) return;
+    const appt = appointments.find((a) => a.id === data.appointmentId);
     if (!appt) {
       toast.error("Choose an appointment");
       return;
     }
-    if (!form.symptoms.trim() || !form.diagnosis.trim()) {
-      toast.error("Symptoms and diagnosis required");
-      return;
-    }
-    db.addConsultation({
-      appointmentId: appt.id,
-      patientId: appt.patientId,
-      doctorId: appt.doctorId,
-      symptoms: [
-        ...new Set(
-          form.symptoms
-            .split(",")
-            .map((s) => s.trim())
-            .filter((s) => s),
-        ),
-      ],
-      diagnosis: form.diagnosis.trim() ? form.diagnosis : "",
-      treatmentPlan: form.treatmentPlan.trim() ? form.treatmentPlan : "",
-      status: form.status,
-    });
+    db.addConsultation({ appointmentId: appt.id, patientId: appt.patientId, doctorId: appt.doctorId, symptoms: data.symptoms, diagnosis: data.diagnosis, treatmentPlan: data.treatmentPlan });
     toast.success("Consultation recorded");
     setOpen(false);
     setForm({
@@ -153,27 +137,9 @@ function ConsultationsPage() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5">
-                  <Label>Symptoms</Label>
-                  <Textarea
-                    value={form.symptoms}
-                    onChange={(e) => setForm({ ...form, symptoms: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Diagnosis</Label>
-                  <Textarea
-                    value={form.diagnosis}
-                    onChange={(e) => setForm({ ...form, diagnosis: e.target.value })}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Treatment plan</Label>
-                  <Textarea
-                    value={form.treatmentPlan}
-                    onChange={(e) => setForm({ ...form, treatmentPlan: e.target.value })}
-                  />
-                </div>
+                <div className="space-y-1.5"><Label>Symptoms</Label><Textarea maxLength={1000} value={form.symptoms} onChange={(e) => setForm({ ...form, symptoms: scrub(e.target.value) })} /></div>
+                <div className="space-y-1.5"><Label>Diagnosis</Label><Textarea maxLength={1000} value={form.diagnosis} onChange={(e) => setForm({ ...form, diagnosis: scrub(e.target.value) })} /></div>
+                <div className="space-y-1.5"><Label>Treatment plan</Label><Textarea maxLength={1000} value={form.treatmentPlan} onChange={(e) => setForm({ ...form, treatmentPlan: scrub(e.target.value) })} /></div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>

@@ -14,7 +14,7 @@ const createConsultationValidation =
       Joi.string()
     ),
 
-    diagnosis: Joi.string().required(),
+    diagnosis: Joi.string().allow("").required(),
 
     treatmentPlan: Joi.string().required()
   });

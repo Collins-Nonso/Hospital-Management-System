@@ -1,29 +1,29 @@
 // backend/src/services/user.service.js
 
+const bcrypt = require("bcryptjs");
 const User = require("../models/User");
 
-const getUsers = async () => {
-  return await User.find().select("-password");
+const createUser = async (data) => {
+  const exists = await User.findOne({ email: data.email });
+  if (exists) throw new Error("User with this email already exists");
+  const hashed = await bcrypt.hash(data.password, 10);
+  const user = await User.create({ ...data, password: hashed });
+  const out = user.toObject();
+  delete out.password;
+  return out;
 };
 
-const getSingleUser = async (id) => {
-  return await User.findById(id).select("-password");
+const getUsers = async () => User.find().select("-password");
+
+const getSingleUser = async (id) => User.findById(id).select("-password");
+
+const updateSingleUser = async (id, data) => {
+  const patch = { ...data };
+  if (patch.password) patch.password = await bcrypt.hash(patch.password, 10);
+  else delete patch.password;
+  return User.findByIdAndUpdate(id, patch, { new: true, runValidators: true }).select("-password");
 };
 
-const updateUser = async (id, data) => {
-  return await User.findByIdAndUpdate(id, data, {
-    new: true,
-    runValidators: true
-  }).select("-password");
-};
+const deleteUser = async (id) => User.findByIdAndDelete(id);
 
-const deleteUser = async (id) => {
-  return await User.findByIdAndDelete(id);
-};
-
-module.exports = {
-  getUsers,
-  getSingleUser,
-  updateUser,
-  deleteUser
-};
+module.exports = { createUser, getUsers, getSingleUser, updateSingleUser, deleteUser };

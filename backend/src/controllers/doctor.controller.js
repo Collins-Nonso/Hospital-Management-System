@@ -22,19 +22,16 @@ exports.getDoctors = async (req, res) => {
 };
 
 exports.updateDoctor = async (req, res) => {
-  // Destructure and whitelist only the fields you want to allow
-  const { availability } = req.body;
-  
-  const updatePayload = {
-    ...(availability !== undefined && { availability })
-  };
-
+  const allowed = [
+    "firstName", "lastName", "email", "phone",
+    "specialization", "department", "availability", "status",
+  ];
+  const updatePayload = {};
+  for (const k of allowed) {
+    if (req.body[k] !== undefined) updatePayload[k] = req.body[k];
+  }
   const doctor = await doctorService.updateDoctor(req.params.id, { $set: updatePayload });
-
-  res.status(200).json({
-    success: true,
-    data: doctor
-  });
+  res.status(200).json({ success: true, data: doctor });
 };
 
 

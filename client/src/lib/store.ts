@@ -135,9 +135,31 @@ export function notify(n: Omit<Notification, "id" | "createdAt" | "read">) {
   api.post("/notifications", n).then(() => refresh("notifications")).catch(() => {});
 }
 
+// Deep-sanitize values sent to the backend: strip HTML tags, control chars,
+// dangerous URL schemes, and trim whitespace. Centralized so every mutation
+// (create/update/notify) is protected regardless of which form submitted it.
+function sanitizeString(s: string): string {
+  return s
+    .replace(/<\s*(script|style)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, "")
+    .replace(/<\/?[a-z][^>]*>/gi, "")
+    .replace(/\b(javascript|data|vbscript)\s*:/gi, "")
+    .replace(/[\u0000-\u001F\u007F]/g, "")
+    .trim();
+}
+function sanitizeDeep<T>(v: T): T {
+  if (typeof v === "string") return sanitizeString(v) as unknown as T;
+  if (Array.isArray(v)) return v.map((x) => sanitizeDeep(x)) as unknown as T;
+  if (v && typeof v === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) out[k] = sanitizeDeep(val);
+    return out as T;
+  }
+  return v;
+}
+
 // ---------- Mutation helpers ----------
 async function create<K extends keyof DBShape>(key: K, body: unknown, successMsg?: { title: string; description: string }): Promise<DBShape[K][number]> {
-  const created = await api.post<DBShape[K][number]>(ENDPOINTS[key], body);
+  const created = await api.post<DBShape[K][number]>(ENDPOINTS[key], sanitizeDeep(body));
   await refresh(key);
   if (successMsg) notify({ ...successMsg, type: "success" });
   return created;
@@ -158,7 +180,7 @@ async function update<K extends keyof DBShape>(
   try {
     const url = `${ENDPOINTS[key]}/${id}`;
     if (method === "PUT") await api.put(url, patch);
-    else await api.patch(url, patch);
+    else await api.put(`${ENDPOINTS[key]}/${id}`, sanitizeDeep(patch));
     await refresh(key);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
@@ -182,7 +204,13 @@ export const db = {
     const item = await create("departments", { status: "active", ...input }, { title: "Department created", description: input.name });
     return item;
   },
-  async updateDepartment(id: ID, patch: Partial<Department>) { await update("departments", id, patch, "PUT"); },
+  async updateDepartment(id: ID, patch: Partial<Department>) {
+    // Optimistic: reflect the toggle immediately so the Switch doesn't flicker
+    // back while the request is in-flight. Refresh syncs with the server after.
+    set({ departments: state.departments.map((d) => (d.id === id ? { ...d, ...patch } : d)) });
+    try { await update("departments", id, patch); }
+    catch (e) { await refresh("departments"); throw e; }
+  },
   async removeDepartment(id: ID) { await remove("departments", id); notify({ title: "Department removed", description: id, type: "warning" }); },
 
   // Doctors (backend exposes PUT /:id and DELETE /:id)

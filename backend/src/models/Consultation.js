@@ -21,6 +21,8 @@ const consultationSchema = new mongoose.Schema(
 
     symptoms: [String],
 
+    diagnosis:   { type: String, default: "" },
+
     treatmentPlan: String,
 
     status: {

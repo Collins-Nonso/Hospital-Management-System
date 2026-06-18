@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useDB, db, type Appointment } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
+import { appointmentSchema, scrub, validate } from "@/lib/validation";
 
 export const Route = createFileRoute("/dashboard/appointments")({
   head: () => ({ meta: [{ title: "Appointments - MediCore" }] }),
@@ -49,12 +50,11 @@ function AppointmentsPage() {
   const filtered = tab === "all" ? appointments : appointments.filter((a) => a.status === tab);
 
   const submit = async () => {
-    if (!form.patientId || !form.doctorId || !form.date || !form.time) {
-      toast.error("Please complete all required fields"); return;
-    }
+    const data = validate(appointmentSchema, form);
+    if (!data) return;
     try {
       // Server generates createdAt + id; only send the user-supplied fields.
-      const { patientId, doctorId, date, time, reason } = form;
+      const { patientId, doctorId, date, time, reason } = data;
       await db.bookAppointment({ patientId, doctorId, date, time, reason, status: "booked" });
       toast.success("Appointment booked");
       setOpen(false);

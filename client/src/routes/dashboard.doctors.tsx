@@ -14,9 +14,10 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDB, db, type Doctor } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
+import { doctorSchema, scrub, validate } from "@/lib/validation";
 
 export const Route = createFileRoute("/dashboard/doctors")({
-  head: () => ({ meta: [{ title: "Doctors — MediCore" }] }),
+  head: () => ({ meta: [{ title: "Doctors - MediCore" }] }),
   component: DoctorsPage,
 });
 
@@ -49,7 +50,8 @@ function DoctorsPage() {
     f.firstName.trim() && f.lastName.trim() && f.email.trim() && f.phone.trim() &&
     f.specialization.trim() && f.departmentId;
   const submit = async () => {
-    if (!valid(form)) { toast.error("Please fill all required fields"); return; }
+    const data = validate(doctorSchema, form);
+    if (!data) return;
     try {
       await db.addDoctor({ ...form, createdAt: new Date().toISOString() });
       toast.success("Doctor added");
@@ -77,7 +79,10 @@ function DoctorsPage() {
             <DialogTrigger asChild><Button><Plus className="mr-1 h-4 w-4" />Add doctor</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>New doctor</DialogTitle></DialogHeader>
-              <DoctorFormFields form={form} setForm={setForm} departments={departments} />
+                <div className="space-y-1.5"><Label>First Name</Label><Input maxLength={80} value={form.firstName} onChange={(e) => setForm({ ...form, firstName: scrub(e.target.value) })} /></div>
+                <div className="space-y-1.5"><Label>Last Name</Label><Input maxLength={80} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: scrub(e.target.value) })} /></div>
+                <div className="space-y-1.5"><Label>Email</Label><Input type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: scrub(e.target.value) })} /></div>
+                <div className="space-y-1.5"><Label>Specialization</Label><Input maxLength={80} value={form.specialization} onChange={(e) => setForm({ ...form, specialization: scrub(e.target.value) })} /></div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
                 <Button onClick={submit}>Add doctor</Button>

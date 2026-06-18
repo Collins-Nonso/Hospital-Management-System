@@ -124,6 +124,8 @@ async function request<T>(path: string, init: RequestInit = {}, body?: unknown):
     ...init,
     headers,
     body: payload !== undefined ? JSON.stringify(payload) : init.body,
+    // Always hit the network so toggles/edits don't get masked by stale 304 caches.
+    cache: "no-store",
   };
 
 

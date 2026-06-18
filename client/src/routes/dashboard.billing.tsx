@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useDB, db, type BillItem } from "@/lib/store";
+import { billSchema, scrub, validate } from "@/lib/validation";
 
 export const Route = createFileRoute("/dashboard/billing")({
   head: () => ({ meta: [{ title: "Billing — MediCore" }] }),
@@ -39,11 +40,8 @@ function BillingPage() {
   const [paymentMethod, setPaymentMethod] = useState<"cash" | "card" | "transfer" | "insurance">("cash");
 
   const submit = async () => {
-    if (!patientId) { toast.error("Select a patient"); return; }
-    if (items.some((i) => !i.itemName.trim() || i.quantity <= 0 || i.unitPrice <= 0)) {
-      toast.error("Each item needs a name, quantity and unit price");
-      return;
-    }
+    const data = validate(billSchema, { patientId, items });
+    if (!data) return;
     const billItems = items.map(toBillItem);
     const totalAmount = billItems.reduce((s, i) => s + i.totalPrice, 0);
     try {
@@ -108,8 +106,8 @@ function BillingPage() {
                   </div>
                   {items.map((it, i) => (
                     <div key={i} className="grid grid-cols-[1fr_80px_120px_auto] gap-2">
-                      <Input placeholder="Description" value={it.itemName} onChange={(e) => setItems(items.map((x, j) => j === i ? { ...x, itemName: e.target.value } : x))} />
-                      <Input type="number" min={1} placeholder="Qty" value={it.quantity || ""} onChange={(e) => setItems(items.map((x, j) => j === i ? { ...x, quantity: Number(e.target.value) } : x))} />
+                      <Input maxLength={120} placeholder="Description" value={it.itemName} onChange={(e) => setItems(items.map((x, j) => j === i ? { ...x, itemName: scrub(e.target.value) } : x))} />
+                      <Input type="number" min={0} max={10000000} placeholder="Quantity" value={it.quantity || ""} onChange={(e) => setItems(items.map((x, j) => j === i ? { ...x, quantity: Number(e.target.value) } : x))} />
                       <Input type="number" min={0} placeholder="Unit price" value={it.unitPrice || ""} onChange={(e) => setItems(items.map((x, j) => j === i ? { ...x, unitPrice: Number(e.target.value) } : x))} />
                       {items.length > 1 && (
                         <Button variant="ghost" size="icon" onClick={() => setItems(items.filter((_, j) => j !== i))}>

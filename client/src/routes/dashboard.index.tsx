@@ -22,8 +22,24 @@ function DashboardHome() {
   const { user } = useAuth();
   const db = useDB((d) => d);
 
-  const today = new Date().toISOString().slice(0, 10);
-  const todays = (db.appointments ?? []).filter((a) => a.date === today && a.status !== "cancelled");
+  const localToday = (() => {
+    const d = new Date();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${d.getFullYear()}-${m}-${day}`;
+  })();
+  const utcToday = new Date().toISOString().slice(0, 10);
+  const sameDay = (raw?: string) => {
+    if (!raw) return false;
+    const s = String(raw).slice(0, 10);
+    if (s === localToday || s === utcToday) return true;
+    const parsed = new Date(raw);
+    if (Number.isNaN(parsed.getTime())) return false;
+    const m = String(parsed.getMonth() + 1).padStart(2, "0");
+    const day = String(parsed.getDate()).padStart(2, "0");
+    return `${parsed.getFullYear()}-${m}-${day}` === localToday;
+  };
+  const todays = (db.appointments ?? []).filter((a) => sameDay(a.date) && a.status !== "cancelled");
   const unpaid = (db.billings ?? []).filter((b) => b.paymentStatus === "pending");
   const paid = (db.billings ?? []).filter((b) => b.paymentStatus === "paid");
   const pendingLabs = (db.labRequests ?? []).filter((r) => r.status === "pending");
@@ -85,8 +101,9 @@ function DashboardHome() {
                   { name: "Rx", value: db.prescriptions.length },
                   { name: "Bills", value: db.billings.length },
                 ]}>
-                  <XAxis dataKey="name" tick={{ fontSize: 11 }} interval={0} angle={-25} textAnchor="end" height={60} />
-                  <YAxis allowDecimals={false} tick={{ fontSize: 11 }} />
+                  <XAxis dataKey="name" tick={{ fontSize: 11, fill: "currentColor" }} interval={0} angle={-25} textAnchor="end" height={60} stroke="currentColor" />
+                  <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: "currentColor" }} stroke="currentColor" />
+
                   <Tooltip />
                   <Bar dataKey="value" fill="var(--primary)" radius={[4, 4, 0, 0]} />
                 </BarChart>

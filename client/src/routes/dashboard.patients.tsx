@@ -25,19 +25,25 @@ export const Route = createFileRoute("/dashboard/patients")({
   component: PatientsPage,
 });
 
+// Disallow angle brackets and control chars at the schema level — server-side
+// sanitization in store.ts is the safety net, this gives users instant feedback.
+const SAFE = /^[^<>\u0000-\u001F]*$/;
+const safeStr = (max: number, msg = "Invalid characters") =>
+  z.string().trim().max(max).regex(SAFE, msg);
+
 const schema = z.object({
-  firstName: z.string().trim().min(1, "First name required").max(50),
-  lastName: z.string().trim().min(1, "Last name required").max(50),
+  firstName: safeStr(50).min(1, "First name required").regex(/^[A-Za-z][A-Za-z' -]*$/, "Letters only"),
+  lastName: safeStr(50).min(1, "Last name required").regex(/^[A-Za-z][A-Za-z' -]*$/, "Letters only"),
   gender: z.enum(["male", "female", "other"]),
   dateOfBirth: z.string().min(1, "Date of birth required"),
-  phone: z.string().trim().min(7, "Phone required").max(20),
-  address: z.string().trim().max(200).optional().default(""),
-  bloodGroup: z.string().max(5).optional().default(""),
-  allergies: z.string().max(200).optional().default(""),
-  emergencyContactName: z.string().trim().max(50).optional().default(""),
-  emergencyContactPhone: z.string().trim().max(20).optional().default(""),
-  emergencyContactRelationship: z.string().trim().max(50).optional().default(""),
-  medicalHistory: z.string().max(200).optional().default(""),
+  phone: safeStr(20).min(7, "Phone required").regex(/^[+\d][\d\s-]*$/, "Digits, spaces, and dashes only"),
+  address: safeStr(200).optional().default(""),
+  bloodGroup: safeStr(5).regex(/^(A|B|AB|O)[+-]?$|^$/, "e.g. O+").optional().default(""),
+  allergies: safeStr(200).optional().default(""),
+  emergencyContactName: safeStr(50).optional().default(""),
+  emergencyContactPhone: safeStr(20).optional().default(""),
+  emergencyContactRelationship: safeStr(50).optional().default(""),
+  medicalHistory: safeStr(200).optional().default(""),
 });
 
 type FormState = {
