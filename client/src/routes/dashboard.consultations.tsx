@@ -74,27 +74,45 @@ function ConsultationsPage() {
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
   };
 
-  const submit = () => {
-    const data = validate(consultationSchema, form);
-    if (!data) return;
-    const appt = appointments.find((a) => a.id === data.appointmentId);
-    if (!appt) {
-      toast.error("Choose an appointment");
-      return;
-    }
-    db.addConsultation({ appointmentId: appt.id, patientId: appt.patientId, doctorId: appt.doctorId, symptoms: data.symptoms, diagnosis: data.diagnosis, treatmentPlan: data.treatmentPlan });
-    toast.success("Consultation recorded");
-    setOpen(false);
-    setForm({
-      appointmentId: "",
-      patientId: "",
-      doctorId: "",
-      symptoms: "",
-      diagnosis: "",
-      treatmentPlan: "",
-      status: "ongoing" as "ongoing" | "completed",
-    });
-  };
+const submit = () => {
+  const data = validate(consultationSchema, form);
+  if (!data) return;
+
+  const appt = appointments.find(
+    (a) => a.id === data.appointmentId
+  );
+
+  if (!appt) {
+    toast.error("Choose an appointment");
+    return;
+  }
+
+  db.addConsultation({
+    appointmentId: appt.id,
+    patientId: appt.patientId,
+    doctorId: appt.doctorId,
+    symptoms: data.symptoms
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean),
+    diagnosis: data.diagnosis,
+    treatmentPlan: data.treatmentPlan,
+    status: form.status,
+  });
+
+  toast.success("Consultation recorded");
+  setOpen(false);
+
+  setForm({
+    appointmentId: "",
+    patientId: "",
+    doctorId: "",
+    symptoms: "",
+    diagnosis: "",
+    treatmentPlan: "",
+    status: "ongoing",
+  });
+};
 
   return (
     <div className="space-y-6">

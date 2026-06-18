@@ -70,7 +70,7 @@ export const appointmentSchema = z.object({
 });
 export const consultationSchema = z.object({
   appointmentId: z.string().min(1, "Select an appointment"),
-  symptoms: safeFreeText(1000, "Symptoms").min(2, "Symptoms required"),
+  symptoms: z.string().min(1),
   diagnosis: safeFreeText(1000, "Diagnosis").min(2, "Diagnosis required"),
   treatmentPlan: safeOptional(1000, "Treatment plan"),
 });
