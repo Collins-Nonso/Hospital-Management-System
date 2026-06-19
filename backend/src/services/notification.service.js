@@ -8,11 +8,11 @@ const createNotification = async (data) => {
 };
 
 const getNotifications = async () => {
-  return await notification.find().populate("recipient").populate("sender").populate("relatedEntity");
+  return await notification.find().populate("recipient").populate("sender");
 };
 
 const markRead = (id) => notification.findByIdAndUpdate(id, { read: true }, { new: true });
 
-const markAllRead = (userId) => notification.updateMany({ recipient: userId }, { read: true });
+const markAllRead = (userId) => notification.updateOne({ recipient: userId }, { read: true });
 
 module.exports = { createNotification, getNotifications, markRead, markAllRead };

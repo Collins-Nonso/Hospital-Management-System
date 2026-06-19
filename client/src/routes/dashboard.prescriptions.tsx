@@ -90,6 +90,16 @@ function PrescriptionsPage() {
                   </div>
                 ))}
               </div>
+              <div className="space-y-1.5 mt-2">
+                <Label>Instructions (optional)</Label>
+                <Input maxLength={1000} placeholder="E.g. Take with food" value={meds.map((x) => x.instructions).filter(Boolean).join("; ")} onChange={(e) => {
+                  const newMeds = [...meds];
+                  newMeds.forEach((med, idx) => {
+                    newMeds[idx] = { ...med, instructions: scrub(e.target.value) };
+                  });
+                  setMeds(newMeds);
+                }} />
+              </div>
               <DialogFooter><Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button><Button onClick={submit}>Create</Button></DialogFooter>
             </DialogContent>
           </Dialog>

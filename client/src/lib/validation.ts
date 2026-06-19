@@ -7,6 +7,7 @@
 // instant feedback and prevent obviously bad payloads from being sent.
 import { z } from "zod";
 import { toast } from "sonner";
+import { Phone } from "lucide-react";
 // Reject angle brackets, ASCII control chars, and a few injection markers.
 // Keep the allow-list pragmatic so legitimate punctuation still works.
 export const SAFE_RE = /^[^<>${}\\\u0000-\u001F\u007F]*$/;
@@ -55,59 +56,74 @@ export const departmentSchema = z.object({
   description: safeOptional(500, "Description"),
 });
 export const doctorSchema = z.object({
-  name: safeName(80, "Doctor name"),
+  firstName: safeName(80, "First name"),
+  lastName: safeName(80, "Last name"),
   email: safeEmail(),
   specialization: safeText(80, "Specialization").min(2),
-  departmentId: z.string().min(1, "Select a department"),
-  availability: z.boolean(),
+  departmentId: safeText(24, "Department ID").min(1),
+  phone: safePhone(),
 });
 export const appointmentSchema = z.object({
-  patientId: z.string().min(1, "Select a patient"),
-  doctorId: z.string().min(1, "Select a doctor"),
+  patientId: safeText(24, "Patient ID").min(1, "Select a patient"),
+  doctorId: safeText(24, "Doctor ID").min(1, "Select a doctor"),
   date: isoDate(),
   time: isoTime(),
   reason: safeOptional(300, "Reason"),
 });
 export const consultationSchema = z.object({
-  appointmentId: z.string().min(1, "Select an appointment"),
-  symptoms: z.string().min(1),
+  appointmentId: safeText(24, "Appointment ID").min(1, "Select an appointment"),
+  symptoms: safeOptional(1000, "Symptoms"),
   diagnosis: safeFreeText(1000, "Diagnosis").min(2, "Diagnosis required"),
   treatmentPlan: safeOptional(1000, "Treatment plan"),
 });
 export const recordSchema = z.object({
-  patientId: z.string().min(1, "Select a patient"),
-  doctorId: z.string().min(1, "Select a doctor"),
+  patientId: safeText(24, "Patient ID").min(1, "Select a patient"),
+  doctorId: safeText(24, "Doctor ID").min(1, "Select a doctor"),
+  consultationId: safeText(24, "Consultation ID").min(1, "Select a consultation"),
   diagnosis: safeFreeText(1000, "Diagnosis").min(2, "Diagnosis required"),
-  symptoms: safeOptional(1000, "Symptoms"),
-  notes: safeOptional(2000, "Notes"),
+  treatmentNote: safeOptional(2000, "Treatment note"),
+  medicalHistory: safeOptional(2000, "Medical history"),
 });
 export const medicationSchema = z.object({
-  name: safeText(80, "Medication").min(1, "Medication name required"),
-  dosage: safeText(40, "Dosage").min(1, "Dosage required"),
-  frequency: safeText(40, "Frequency").min(1, "Frequency required"),
-  duration: safeText(40, "Duration").min(1, "Duration required"),
+  medicationName: safeOptional(120, "Medication name"),
+  dosage: safeOptional(40, "Dosage"),
+  frequency: safeOptional(40, "Frequency"),
+  duration: safeOptional(40, "Duration"),
+  instructions: safeOptional(1000, "Instructions"),
 });
 export const prescriptionSchema = z.object({
-  patientId: z.string().min(1, "Select a patient"),
-  doctorId: z.string().min(1, "Select a doctor"),
-  medications: z.array(medicationSchema).min(1, "Add at least one medication"),
+  patientId: safeText(24, "Patient ID").min(1, "Select a patient"),
+  doctorId: safeText(24, "Doctor ID").min(1, "Select a doctor"),
+  consultationId: safeText(24, "Consultation ID").optional(),
+  medications: medicationSchema.array().min(1, "Add at least one medication"),
 });
 export const labRequestSchema = z.object({
-  patientId: z.string().min(1, "Select a patient"),
-  doctorId: z.string().min(1, "Select a doctor"),
-  testType: safeText(120, "Test type").min(2, "Test type required"),
+  patientId: safeText(24, "Patient ID").min(1, "Select a patient"),
+  doctorId: safeText(24, "Doctor ID").min(1, "Select a doctor"),
+  consultationId: safeText(24, "Consultation ID").optional(),
+  testName: safeText(120, "Test type").min(2, "Test type required"),
+  instructions: safeOptional(1000, "Instructions"),
 });
 export const labResultSchema = z.object({
-  labRequestId: z.string().min(1),
-  result: safeFreeText(2000, "Result").min(2, "Result required"),
+  labRequestId: safeText(24, "Lab Request ID").min(1),
+  patientId: safeText(24, "Patient ID").min(1, "Select a patient"),
+  result: safeText(2000, "Result").min(1, "Result required"),
+  remarks: safeOptional(1000, "Remarks"),
+  uploadedBy: safeText(80, "Uploaded by").min(2, "Uploader name required"),
 });
 export const billItemSchema = z.object({
-  name: safeText(120, "Item").min(1, "Item required"),
-  amount: z.number().positive("Amount must be greater than 0").max(10_000_000),
+  itemName: safeText(120, "Item description").min(1, "Item description required"),
+  quantity: safeText(10, "Quantity").regex(/^\d+$/, "Quantity must be a positive integer").transform(Number),
+  unitPrice: safeText(20, "Unit price").regex(/^\d+(\.\d{1,2})?$/, "Unit price must be a valid number").transform(Number),
+  totalPrice: safeText(20, "Total price").regex(/^\d+(\.\d{1,2})?$/, "Total price must be a valid number").transform(Number),
 });
 export const billSchema = z.object({
-  patientId: z.string().min(1, "Select a patient"),
-  items: z.array(billItemSchema).min(1, "Add at least one item"),
+  // patientId: safeText(24, "Patient ID").min(1, "Select a patient"),
+  // paymentMethod: safeText(20, "Payment method").min(1, "Select a payment method"),
+  // itemName: billItemSchema.shape.itemName,
+  // quantity: billItemSchema.shape.quantity,
+  // unitPrice: billItemSchema.shape.unitPrice,
+  // notes: safeOptional(1000, "Notes"),
 });
 // Used inline on Inputs to strip the worst characters as the user types.
 export function scrub(value: string): string {

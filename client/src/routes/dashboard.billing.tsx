@@ -43,13 +43,13 @@ function BillingPage() {
     const data = validate(billSchema, { patientId, items });
     if (!data) return;
     const billItems = items.map(toBillItem);
-    const totalAmount = billItems.reduce((s, i) => s + i.totalPrice, 0);
+    // const totalAmount = billItems.reduce((s, i) => s + i.totalPrice, 0);
     try {
       await db.addBill({
-        invoiceNumber: `INV-${Date.now()}`,
+        // invoiceNumber: `INV-${Date.now()}`,
         patientId,
         billItems,
-        totalAmount,
+        // totalAmount,
         paymentMethod,
         notes,
       });

@@ -118,6 +118,33 @@ function denormalizeBody(path: string, body: unknown, method?: string): unknown 
       delete out.time;
     }
   }
+
+  if (path === "/prescriptions" && Array.isArray(out.medications)) {
+    out.medications = out.medications.map((med) => {
+      const m = med as Record<string, unknown>;
+      return {
+        medicationName: m.medicationName,
+        dosage: m.dosage,
+        frequency: m.frequency,
+        duration: m.duration,
+        ...(m.instructions ? { instructions: m.instructions } : {}),
+      };
+    });
+  }
+  if (path === "/billings" && Array.isArray(out.billItems)) {
+    out.billItems = out.billItems.map((item) => {
+      const i = item as Record<string, unknown>;
+      return {
+        itemName: i.itemName,
+        quantity: Number(i.quantity),
+        unitPrice: Number(i.unitPrice),
+      };
+    });
+  }
+  if (path === "/lab-requests" && out.instructions === "") {
+    delete out.instructions;
+  }
+
   if (method === "POST") {
     const allowed = ALLOWED_CREATE_KEYS[path];
     if (allowed) {

@@ -138,21 +138,21 @@ const submit = () => {
                     value={form.appointmentId}
                     onValueChange={(v) => setForm({ ...form, appointmentId: v })}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select appointment" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {appointments.map((a) => {
-                        const p = patients.find((x) => x.id === a.patientId);
-                        const d = doctors.find((x) => x.id === a.doctorId);
-                        return (
-                          <SelectItem key={a.id} value={a.id}>
-                            {p?.firstName} {p?.lastName} —{" "}
-                            {d ? `${d.firstName} ${d.lastName}` : "—"} · {a.date}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select appointment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {appointments.map((a) => {
+                      const p = patients.find((x) => x.id === a.patientId);
+                      const d = doctors.find((x) => x.id === a.doctorId);
+                      return (
+                        <SelectItem key={a.id} value={a.id}>
+                          {p?.firstName} {p?.lastName} —{" "}
+                          {d ? `${d.firstName} ${d.lastName}` : "—"} · {a.date}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5"><Label>Symptoms</Label><Textarea maxLength={1000} value={form.symptoms} onChange={(e) => setForm({ ...form, symptoms: scrub(e.target.value) })} /></div>

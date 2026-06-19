@@ -53,7 +53,8 @@ function DoctorsPage() {
     const data = validate(doctorSchema, form);
     if (!data) return;
     try {
-      await db.addDoctor({ ...form, createdAt: new Date().toISOString() });
+      // await db.addDoctor({ ...form, createdAt: new Date().toISOString() });
+      await db.addDoctor(form);
       toast.success("Doctor added");
       setOpen(false); setForm(blank());
     } catch (e) { toast.error(e instanceof Error ? e.message : "Failed"); }
@@ -83,6 +84,19 @@ function DoctorsPage() {
                 <div className="space-y-1.5"><Label>Last Name</Label><Input maxLength={80} value={form.lastName} onChange={(e) => setForm({ ...form, lastName: scrub(e.target.value) })} /></div>
                 <div className="space-y-1.5"><Label>Email</Label><Input type="email" maxLength={120} value={form.email} onChange={(e) => setForm({ ...form, email: scrub(e.target.value) })} /></div>
                 <div className="space-y-1.5"><Label>Specialization</Label><Input maxLength={80} value={form.specialization} onChange={(e) => setForm({ ...form, specialization: scrub(e.target.value) })} /></div>
+                <div className="space-y-1.5"><Label>Department</Label>
+                  <Select value={form.departmentId} onValueChange={(v) => setForm({ ...form, departmentId: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select department" /></SelectTrigger>
+                    <SelectContent>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id}>
+                          {dept.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5"><Label>Phone</Label><Input maxLength={20} value={form.phone} onChange={(e) => setForm({ ...form, phone: scrub(e.target.value) })} /></div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
                 <Button onClick={submit}>Add doctor</Button>

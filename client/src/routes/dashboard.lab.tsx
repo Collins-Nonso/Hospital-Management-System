@@ -46,30 +46,33 @@ function LabPage() {
   const results = useDB((d) => d.labResults);
   const patients = useDB((d) => d.patients);
   const doctors = useDB((d) => d.doctors);
+  const consultations = useDB((d) => d.consultations);
   const { user } = useAuth();
   // Lab Scientist is restricted to creating new lab requests only — they can
   // view the request queue but cannot upload results.
   const isLabScientist = user?.role === "lab_scientist";
 
   const [openReq, setOpenReq] = useState(false);
-  const [reqForm, setReqForm] = useState({
-    patientId: "",
-    doctorId: "",
-    testName: "",
-    instructions: "",
-  });
+  const [reqForm, setReqForm] = useState({ patientId: "", doctorId: "", consultationId: "", testName: "", instructions: "" });
 
   const [openRes, setOpenRes] = useState<{ id: string } | null>(null);
   const [resultText, setResultText] = useState("");
 
   const submitReq = async () => {
+    if (!reqForm.patientId || !reqForm.doctorId || !reqForm.consultationId || !reqForm.testName.trim()) {
+      toast.error("Patient, doctor, consultation and test name are required");
+      console.error("Lab request form validation failed", reqForm);
+      return;
+    }
+
     const data = validate(labRequestSchema, reqForm);
     if (!data) return;
+
     try {
       await db.addLabRequest(data as any);
       toast.success("Lab request created");
       setOpenReq(false);
-      setReqForm({ patientId: "", doctorId: "", testName: "", instructions: "" });
+      setReqForm({ patientId: "", doctorId: "", consultationId: "", testName: "", instructions: "" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");
     }
@@ -138,6 +141,22 @@ function LabPage() {
                           {doc.specialization ? ` — ${doc.specialization}` : ""}
                         </SelectItem>
                       ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5"><Label>Consultation</Label>
+                  <Select value={reqForm.consultationId} onValueChange={(v) => setReqForm({ ...reqForm, consultationId: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select consultation" /></SelectTrigger>
+                    <SelectContent>
+                      {consultations.map((c) => {
+                        const patient = patients.find((p) => p.id === c.patientId);
+                        const doctor = doctors.find((d) => d.id === c.doctorId);
+                        return (
+                          <SelectItem key={c.id} value={c.id}>
+                            {(patient ? `${patient.firstName} ${patient.lastName}` : "Consultation")} — {doctor ? `${doctor.firstName} ${doctor.lastName}` : "Doctor"}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                 </div>

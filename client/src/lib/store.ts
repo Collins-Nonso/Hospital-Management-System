@@ -13,7 +13,7 @@ export interface Consultation { id: ID; appointmentId: ID; patientId: ID; doctor
 export interface MedicalRecord { id: ID; patientId: ID; doctorId: ID; consultationId: ID; diagnosis: string; treatmentNote: string; medicalHistory: string[]; createdAt: string; }
 export interface LabRequest { id: ID; patientId: ID; doctorId: ID; consultationId?: ID; testName: string; instructions?: string; status: "pending" | "completed"; createdAt: string; }
 export interface LabResult { id: ID; labRequestId: ID; patientId: ID; result: string; remarks: string; uploadedBy: string; createdAt: string; }
-export interface Medication { medicationName: string; dosage: string; frequency: string; duration: string; instructions?: string; }
+export interface Medication { medicationName: string; dosage: string | number; frequency: string | number; duration: string | number; instructions?: string; }
 export interface Prescription { id: ID; patientId: ID; doctorId: ID; consultationId?: ID; medications: Medication[]; status: "pending" | "dispensed"; createdAt: string; }
 export interface Pharmacy { id: ID; prescriptionId: ID; patientId: ID; pharmacistId: ID; drugsDispensed: string[]; dispensedAt: string; createdAt: string; }
 export interface BillItem { itemName: string; quantity: number; unitPrice: number; totalPrice: number; }
@@ -214,7 +214,7 @@ export const db = {
   async removeDepartment(id: ID) { await remove("departments", id); notify({ title: "Department removed", description: id, type: "warning" }); },
 
   // Doctors (backend exposes PUT /:id and DELETE /:id)
-  async addDoctor(input: Omit<Doctor, "id">) {
+  async addDoctor(input: Omit<Doctor, "id" | "createdAt">) {
     return create("doctors", input, { title: "Doctor added", description: `${input.firstName} ${input.lastName}` });
   },
   async updateDoctor(id: ID, patch: Partial<Doctor>) { await update("doctors", id, patch, "PUT"); },
@@ -310,7 +310,7 @@ export const db = {
   },
 
   // Billing
-  async addBill(input: Omit<Bill, "id" | "paymentStatus" | "createdAt">) {
+  async addBill(input: Omit<Bill, "id" | "paymentStatus" | "createdAt" | "invoiceNumber" | "totalAmount">) {
     const item = await create("billings", { paymentStatus: "pending", ...input });
     notify({
       title: "Invoice generated",
