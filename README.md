@@ -1,4 +1,4 @@
-# MediCore — Hospital Management System
+# MediCore - Hospital Management System
 [![Node](https://img.shields.io/badge/Node-%E2%89%A518-339933?logo=node.js&logoColor=white)](https://nodejs.org)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
@@ -7,10 +7,10 @@
 A full-stack Hospital Management platform that unifies **patients, doctors,
 appointments, consultations, lab, pharmacy and billing** behind a single
 role-based dashboard.
-- **Frontend** — React 19 + TanStack Start + Tailwind v4 + shadcn/ui
-- **Backend** — Node.js + Express + Mongoose (MongoDB) + JWT auth
-- **Auth** — JWT bearer tokens, role-based access control (RBAC)
-- **Real-time UX** — optimistic updates with background polling refresh
+- **Frontend** - React 19 + TanStack Start + Tailwind v4 + shadcn/ui
+- **Backend** - Node.js + Express + Mongoose (MongoDB) + JWT auth
+- **Auth** - JWT bearer tokens, role-based access control (RBAC)
+- **Real-time UX** - optimistic updates with background polling refresh
 ---
 ## Table of contents
 - [Features](#features)
@@ -54,9 +54,9 @@ role-based dashboard.
               ▼                                                 ▼
         local cache + polling                            MongoDB (Atlas)
 ```
-- **Stateless API** — every request carries `Authorization: Bearer <jwt>`.
-- **RBAC** — `protect` + `authorizeRoles("admin", …)` middleware on sensitive routes.
-- **Client cache** — pages read from a small in-memory store that is rehydrated
+- **Stateless API** - every request carries `Authorization: Bearer <jwt>`.
+- **RBAC** - `protect` + `authorizeRoles("admin", …)` middleware on sensitive routes.
+- **Client cache** - pages read from a small in-memory store that is rehydrated
   on login, after every mutation, on tab focus and every 15s.
 ---
 ## Quick start
@@ -339,7 +339,7 @@ npm run preview  # preview the build
 ```
 ---
 ## Contributing
-## Group 4 — TS Academy Backend Development Capstone Project
+## Group 4 - TS Academy Backend Development Capstone Project
 1. Fork and create a feature branch (`git checkout -b feat/my-change`).
 2. Commit with conventional messages (`feat:`, `fix:`, `docs:`).
 3. Open a Pull Request describing the change and screenshots if UI.

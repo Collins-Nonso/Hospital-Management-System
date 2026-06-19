@@ -1,13 +1,7 @@
 // client/src/lib/api.ts
 
 // Thin fetch wrapper for the Express + MongoDB backend.
-// - Base URL from VITE_API_URL (defaults to http://localhost:5000/api)
-// - Attaches JWT from localStorage on every request
-// - Normalizes Mongo `_id` -> `id` recursively
-// - Translates between the frontend's `*Id` field names and the backend's
-//   Mongoose ref names (e.g. patientId <-> patient, departmentId <-> department,
-//   date/time <-> appointmentDate/appointmentTime).
-// - Throws Error(message) on non-2xx, using the server-provided message.
+
 
 const BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? "http://localhost:5000/api";
 const TOKEN_KEY = "hms.token";
@@ -22,8 +16,7 @@ export function setToken(t: string | null) {
   else localStorage.removeItem(TOKEN_KEY);
 }
 
-// Keys that the backend stores as ObjectId refs.  The frontend uses `${ref}Id`
-// (e.g. patientId), so we translate both directions.
+
 const REF_KEYS = [
   "patient", "doctor", "department", "consultation", "appointment",
   "consultant", "prescription", "pharmacist", "labRequest", "user", "uploadedBy",
@@ -84,8 +77,24 @@ function normalize<T = unknown>(v: unknown): T {
   return v as T;
 }
 
-// Translate outgoing body keys so the backend's Mongoose validators are happy.
-function denormalizeBody(path: string, body: unknown): unknown {
+// Allowed body keys per backend create endpoint. Joi rejects any unknown
+// field with a 400 ("X is not allowed"), so we pre-filter UI-only fields
+// like `createdAt`, `invoiceNumber`, `totalAmount`, `status` (where the
+// backend assigns defaults), etc.
+const ALLOWED_CREATE_KEYS: Record<string, readonly string[]> = {
+  "/doctors": ["firstName", "lastName", "email", "phone", "specialization", "department", "availability", "status"],
+  "/patients": ["firstName", "lastName", "gender", "dateOfBirth", "phone", "address", "bloodGroup", "allergies", "emergencyContact", "medicalHistory"],
+  "/departments": ["name", "description", "status"],
+  "/appointments": ["patient", "doctor", "appointmentDate", "appointmentTime", "reason", "status"],
+  "/consultations": ["appointment", "patient", "doctor", "symptoms", "diagnosis", "treatmentPlan", "status"],
+  "/medical-records": ["patient", "doctor", "consultation", "diagnosis", "treatmentNote", "medicalHistory"],
+  "/lab-requests": ["patient", "doctor", "consultation", "testName", "instructions"],
+  "/lab-results": ["labRequest", "patient", "uploadedBy", "result", "remarks"],
+  "/prescriptions": ["patient", "doctor", "consultation", "medications"],
+  "/billings": ["patient", "appointment", "consultant", "paymentMethod", "notes", "billItems"],
+  "/pharmacies/dispense": ["prescription", "patient", "pharmacist", "drugsDispensed"],
+};
+function denormalizeBody(path: string, body: unknown, method?: string): unknown {
   if (body == null || typeof body !== "object" || Array.isArray(body)) return body;
   const src = body as Record<string, unknown>;
   const out: Record<string, unknown> = {};
@@ -109,6 +118,17 @@ function denormalizeBody(path: string, body: unknown): unknown {
       delete out.time;
     }
   }
+  if (method === "POST") {
+    const allowed = ALLOWED_CREATE_KEYS[path];
+    if (allowed) {
+      const filtered: Record<string, unknown> = {};
+      for (const k of allowed) {
+        const v = out[k];
+        if (v !== undefined && v !== "" && v !== null) filtered[k] = v;
+      }
+      return filtered;
+    }
+  }
   return out;
 }
 async function request<T>(path: string, init: RequestInit = {}, body?: unknown): Promise<T> {
@@ -116,10 +136,11 @@ async function request<T>(path: string, init: RequestInit = {}, body?: unknown):
     "Content-Type": "application/json",
     ...(init.headers as Record<string, string> | undefined),
   };
+
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const payload = body !== undefined ? denormalizeBody(path, body) : undefined;
+  const payload = body !== undefined ? denormalizeBody(path, body, init.method) : undefined;
   const finalInit: RequestInit = {
     ...init,
     headers,

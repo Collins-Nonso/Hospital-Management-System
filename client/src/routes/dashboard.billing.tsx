@@ -15,7 +15,7 @@ import { useDB, db, type BillItem } from "@/lib/store";
 import { billSchema, scrub, validate } from "@/lib/validation";
 
 export const Route = createFileRoute("/dashboard/billing")({
-  head: () => ({ meta: [{ title: "Billing — MediCore" }] }),
+  head: () => ({ meta: [{ title: "Billing - MediCore" }] }),
   component: BillingPage,
 });
 

@@ -5,7 +5,8 @@ const validateMiddleware = (
 ) => {
   return (req, res, next) => {
     const { error } = schema.validate(
-      req.body
+      req.body,
+      { stripUnknown: true }
     );
 
     if (error) {

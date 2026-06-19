@@ -11,7 +11,7 @@ import { useDB, db } from "@/lib/store";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard/pharmacy")({
-  head: () => ({ meta: [{ title: "Pharmacy — MediCore" }] }),
+  head: () => ({ meta: [{ title: "Pharmacy - MediCore" }] }),
   component: PharmacyPage,
 });
 

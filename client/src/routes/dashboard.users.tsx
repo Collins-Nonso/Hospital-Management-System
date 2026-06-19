@@ -21,7 +21,7 @@ import { api } from "@/lib/api";
 import { useAuth, type Role, type User } from "@/lib/auth";
 
 export const Route = createFileRoute("/dashboard/users")({
-  head: () => ({ meta: [{ title: "Users — MediCore" }] }),
+  head: () => ({ meta: [{ title: "Users - MediCore" }] }),
   component: UsersPage,
 });
 

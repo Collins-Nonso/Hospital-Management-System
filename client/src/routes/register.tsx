@@ -34,7 +34,7 @@ function RegisterPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<Role>("receptionist");
+  const [role, setRole] = useState<Role>("lab_scientist");
   const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async (e: FormEvent) => {
@@ -79,9 +79,9 @@ function RegisterPage() {
                 <SelectItem value="admin" disabled>Admin</SelectItem>
                 <SelectItem value="doctor" disabled>Doctor</SelectItem>
                 <SelectItem value="nurse" disabled>Nurse</SelectItem>
-                <SelectItem value="receptionist">Receptionist</SelectItem>
+                <SelectItem value="receptionist" disabled>Receptionist</SelectItem>
                 <SelectItem value="pharmacist" disabled>Pharmacist</SelectItem>
-                <SelectItem value="lab_scientist" disabled>Lab Scientist</SelectItem>
+                <SelectItem value="lab_scientist">Lab Scientist</SelectItem>
               </SelectContent>
             </Select>
           </div>
