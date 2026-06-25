@@ -106,10 +106,10 @@ export const labRequestSchema = z.object({
 });
 export const labResultSchema = z.object({
   labRequestId: safeText(24, "Lab Request ID").min(1),
-  patientId: safeText(24, "Patient ID").min(1, "Select a patient"),
-  result: safeText(2000, "Result").min(1, "Result required"),
-  remarks: safeOptional(1000, "Remarks"),
-  uploadedBy: safeText(80, "Uploaded by").min(2, "Uploader name required"),
+  // patientId: safeText(24, "Patient ID").min(1, "Select a patient"),
+  result: safeFreeText(2000, "Result").min(2, "Result required"),
+  // remarks: safeOptional(1000, "Remarks"),
+  // uploadedBy: safeText(80, "Uploaded by").min(2, "Uploader name required"),
 });
 export const billItemSchema = z.object({
   itemName: safeText(120, "Item description").min(1, "Item description required"),

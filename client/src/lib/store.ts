@@ -241,6 +241,18 @@ export const db = {
     return item;
   },
   async updateAppointment(id: ID, patch: Partial<Appointment>) { await update("appointments", id, patch); },
+  // async getAppointments(id: ID) {
+  //   try {
+  //     const raw = await api.get<unknown>("/appointments");
+  //     const appointments = unwrapList<Appointment>(raw);
+
+  //     set({ appointments });
+  //     return appointments;
+  //   } catch (error) {
+  //     console.error("Failed to fetch appointments:", error);
+  //     throw error;
+  //   }
+  // },
   async setAppointmentStatus(id: ID, status: Appointment["status"]) {
     const prev = state.appointments;
     set({ appointments: prev.map((a) => (a.id === id ? { ...a, status } : a)) });
@@ -328,10 +340,38 @@ export const db = {
   // Notifications
   async markNotificationRead(id: ID) {
     set({ notifications: state.notifications.map((n) => (n.id === id ? { ...n, read: true } : n)) });
-    try { await api.patch(`/notifications/${id}`, { read: true }); } catch {}
+    // Try the conventional REST endpoint first, then fall back to the
+    // dedicated `/read` action route some backends expose.
+    try {
+      await api.patch(`/notifications/${id}`, { read: true });
+    } catch {
+      try { await api.patch(`/notifications/${id}/read`, {}); } catch {}
+    }
+    await refresh("notifications");
   },
   async markAllNotificationsRead() {
+    const unread = state.notifications.filter((n) => !n.read);
     set({ notifications: state.notifications.map((n) => ({ ...n, read: true })) });
-    try { await api.patch("/notifications/read-all", {}); } catch {}
+    // Prefer a bulk endpoint when available; otherwise persist each unread
+    // notification individually so the DB reflects the change and the next
+    // GET /notifications doesn't resurrect them.
+    let bulkOk = false;
+    try {
+      await api.post("/notifications/read-all", {});
+      bulkOk = false;
+    } catch {}
+
+    if (!bulkOk) {
+      await Promise.all(
+        unread.map(async (n) => {
+          try {
+            await api.patch(`/notifications/${n.id}`, { read: true });
+          } catch {
+            try { await api.patch(`/notifications/${n.id}/read`, {}); } catch {}
+          }
+        }),
+      );
+    }
+    await refresh("notifications");
   },
 };

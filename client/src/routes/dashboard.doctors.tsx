@@ -149,8 +149,6 @@ function DoctorsPage() {
                       <Badge variant={d.status === "active" ? "default" : "secondary"} className="capitalize">
                         {d.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
                       <Badge variant={d.status === "active" ? "secondary" : "destructive"}>
                         {d.status}
                       </Badge>

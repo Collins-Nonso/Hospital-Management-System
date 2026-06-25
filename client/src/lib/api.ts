@@ -62,11 +62,25 @@ function normalize<T = unknown>(v: unknown): T {
     // fields so existing components don't need to know about Mongoose names.
     if ("appointmentDate" in out && !("date" in out)) {
       const d = out.appointmentDate;
+        const toLocalYMD = (dt: Date) => {
+        if (Number.isNaN(dt.getTime())) return "";
+        const m = String(dt.getMonth() + 1).padStart(2, "0");
+        const day = String(dt.getDate()).padStart(2, "0");
+        return `${dt.getFullYear()}-${m}-${day}`;
+      };
       if (typeof d === "string") {
-        // ISO -> YYYY-MM-DD
-        out.date = d.length >= 10 ? d.slice(0, 10) : d;
+        // Bare YYYY-MM-DD: keep as a literal calendar date (no TZ shift).
+        // Full ISO with time: convert to the user's local calendar date.
+        if (/^\d{4}-\d{2}-\d{2}$/.test(d)) {
+          out.date = d;
+        } else if (d.length >= 10) {
+          const parsed = new Date(d);
+          out.date = Number.isNaN(parsed.getTime()) ? d.slice(0, 10) : toLocalYMD(parsed);
+        } else {
+          out.date = d;
+        }
       } else if (d instanceof Date) {
-        out.date = d.toISOString().slice(0, 10);
+        out.date = toLocalYMD(d);
       }
     }
     if ("appointmentTime" in out && !("time" in out)) {

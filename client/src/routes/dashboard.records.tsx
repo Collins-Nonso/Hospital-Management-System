@@ -159,14 +159,6 @@ function RecordsPage() {
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Symptoms</Label>
-                  <Textarea
-                    maxLength={1000}
-                    value={form.symptoms}
-                    onChange={(e) => setForm({ ...form, symptoms: scrub(e.target.value) })}
-                  />
-                </div>
-                <div className="space-y-1.5">
                   <Label>Diagnosis</Label>
                   <Textarea
                     maxLength={1000}
@@ -180,6 +172,14 @@ function RecordsPage() {
                     maxLength={2000}
                     value={form.notes}
                     onChange={(e) => setForm({ ...form, notes: scrub(e.target.value) })}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Medical history</Label>
+                  <Textarea
+                    maxLength={2000}
+                    value={form.medicalHistory}
+                    onChange={(e) => setForm({ ...form, medicalHistory: scrub(e.target.value) })}
                   />
                 </div>
               </div>
@@ -202,8 +202,8 @@ function RecordsPage() {
                 <TableHead>Doctor</TableHead>
                 <TableHead>Diagnosis</TableHead>
                 <TableHead>Symptoms</TableHead>
-                <TableHead>Notes</TableHead>
-                <TableHead>Date</TableHead>
+                <TableHead>Treatment</TableHead>
+                <TableHead>Created</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -218,10 +218,10 @@ function RecordsPage() {
                     <TableCell>{d ? `${d.firstName} ${d.lastName}` : "—"}</TableCell>
                     <TableCell>{r.diagnosis}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {r.medicalHistory?.length ? r.medicalHistory.join(", ") : "—"}
+                      {r.diagnosis || "—"}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {r.treatmentNote || "—"}
+                      {r.medicalHistory || "—"}
                     </TableCell>
                     <TableCell>{new Date(r.createdAt).toLocaleDateString()}</TableCell>
                   </TableRow>

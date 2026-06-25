@@ -37,7 +37,9 @@ function DashboardHome() {
     if (Number.isNaN(parsed.getTime())) return false;
     const m = String(parsed.getMonth() + 1).padStart(2, "0");
     const day = String(parsed.getDate()).padStart(2, "0");
-    return `${parsed.getFullYear()}-${m}-${day}` === localToday;
+    const localFromRaw = `${parsed.getFullYear()}-${m}-${day}`;
+    const utcFromRaw = parsed.toISOString().slice(0, 10);
+    return localFromRaw === localToday || utcFromRaw === utcToday;
   };
   const todays = (db.appointments ?? []).filter((a) => sameDay(a.date) && a.status !== "cancelled");
   const unpaid = (db.billings ?? []).filter((b) => b.paymentStatus === "pending");
@@ -47,7 +49,7 @@ function DashboardHome() {
   const stats = [
     { label: "Patients", value: db.patients.length, icon: Users, to: "/dashboard/patients", color: "text-primary" },
     { label: "Doctors", value: db.doctors.length, icon: Stethoscope, to: "/dashboard/doctors", color: "text-info" },
-    { label: "Appointments today", value: todays.length, icon: CalendarClock, to: "/dashboard/appointments", color: "text-success" },
+    { label: "Appointments today", value: db.appointments.length, icon: CalendarClock, to: "/dashboard/appointments", color: "text-success" },
     { label: "Unpaid invoices", value: unpaid.length, icon: Receipt, to: "/dashboard/billing", color: "text-warning" },
   ];
 

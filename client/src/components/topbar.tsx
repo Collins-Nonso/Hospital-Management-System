@@ -26,7 +26,9 @@ export function Topbar() {
   const { theme, toggle } = useTheme();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const notifications = useDB((d) => d.notifications);
+  const notifications = useDB((d) =>
+    [...d.notifications].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()),
+  );
   const unread = notifications.filter((n) => !n.read).length;
   const userName = getDisplayName(user);
   const initials = getUserInitials(user);
