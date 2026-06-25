@@ -49,7 +49,7 @@ function DashboardHome() {
   const stats = [
     { label: "Patients", value: db.patients.length, icon: Users, to: "/dashboard/patients", color: "text-primary" },
     { label: "Doctors", value: db.doctors.length, icon: Stethoscope, to: "/dashboard/doctors", color: "text-info" },
-    { label: "Appointments today", value: db.appointments.length, icon: CalendarClock, to: "/dashboard/appointments", color: "text-success" },
+    { label: "Appointments", value: db.appointments.length, icon: CalendarClock, to: "/dashboard/appointments", color: "text-success" },
     { label: "Unpaid invoices", value: unpaid.length, icon: Receipt, to: "/dashboard/billing", color: "text-warning" },
   ];
 
