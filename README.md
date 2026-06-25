@@ -4,6 +4,7 @@
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)](https://react.dev)
 [![TanStack Start](https://img.shields.io/badge/TanStack-Start-FF4154)](https://tanstack.com/start)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](#license)
+---
 A full-stack Hospital Management platform that unifies **patients, doctors,
 appointments, consultations, lab, pharmacy and billing** behind a single
 role-based dashboard.
